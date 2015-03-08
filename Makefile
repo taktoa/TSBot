@@ -10,6 +10,8 @@ build:
 
 clean:
 	cabal clean
+	if test -e default.nix; then rm default.nix; fi
+	if test -e shell.nix; then rm shell.nix; fi
 	if test -d .cabal-sandbox; then cabal sandbox delete; fi
 	if test -d .hpc; then rm -r .hpc; fi
 
@@ -28,10 +30,14 @@ install:
 	cabal sandbox init
 	cabal install --enable-tests --jobs --only-dependencies --reorder-goals
 
-nix:
-	rm default.nix shell.nix
-	cabal2nix TSBot.cabal > default.nix
-	cabal2nix --shell TSBot.cabal > shell.nix
+nix-init:
+	if test -e default.nix; then rm default.nix; fi
+	if test -e shell.nix; then rm shell.nix; fi
+	[ `cabal2nix --version` = "2.0" ] && cabal2nix --shell . > shell.nix;
+	[ `cabal2nix --version` = "2.0" ] && cabal2nix . > default.nix;
+
+nix-shell: nix-init
+	nix-shell
 
 repl:
 	cabal repl lib:TSBot
