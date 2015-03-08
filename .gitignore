@@ -17,3 +17,5 @@ cabal.config
 *.hp
 Generate.hs
 HLint.hs
+default.nix
+shell.nix

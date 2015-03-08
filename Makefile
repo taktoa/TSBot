@@ -18,15 +18,20 @@ configure:
 
 haddock:
 	cabal haddock --hyperlink-source
-	# dist/doc/html/TSBot/index.html
+# dist/doc/html/TSBot/index.html
 
 hpc:
 	hpc markup --destdir=tmp dist/hpc/tix/tests/tests.tix
-	# tmp/hpc_index.html
+# tmp/hpc_index.html
 
 install:
 	cabal sandbox init
-	cabal install --enable-benchmarks --enable-tests --jobs --only-dependencies --reorder-goals
+	cabal install --enable-tests --jobs --only-dependencies --reorder-goals
+
+nix:
+	rm default.nix shell.nix
+	cabal2nix TSBot.cabal > default.nix
+	cabal2nix --shell TSBot.cabal > shell.nix
 
 repl:
 	cabal repl lib:TSBot
