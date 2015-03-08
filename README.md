@@ -1,5 +1,7 @@
 # TSBot
 
+[![Build Status](https://travis-ci.org/taktoa/TSBot.svg?branch=master)](https://travis-ci.org/taktoa/TSBot)
+
 ``` sh
 # Update to latest version of Cabal.
 cabal update
