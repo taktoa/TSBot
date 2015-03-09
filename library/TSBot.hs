@@ -5,23 +5,24 @@
 module TSBot (module TSBot) where
 
 -- GENERATE: import New.Module as TSBot
-import Control.Concurrent (forkIO, killThread)
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Trans.Resource
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as B
-import Data.Conduit
-import Data.Conduit.Attoparsec
-import Data.Conduit.Binary hiding (mapM_)
-import Data.Conduit.Combinators (decodeUtf8, encodeUtf8)
-import qualified Data.Conduit.Combinators as CC
-import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T (putStrLn)
-import Network (PortID (..), connectTo)
-import System.Environment (getArgs, getProgName)
-import System.IO (BufferMode (..), hClose, hSetBuffering, stdin)
-import TSBot.ClientQuery.Parse
+import           Control.Concurrent           (forkIO, killThread)
+import           Control.Monad.IO.Class       (MonadIO, liftIO)
+import           Control.Monad.Trans.Resource
+import           Data.ByteString              (ByteString)
+import qualified Data.ByteString.Char8        as B
+import           Data.Conduit
+import           Data.Conduit.Attoparsec
+import           Data.Conduit.Binary          hiding (mapM_)
+import           Data.Conduit.Combinators     (decodeUtf8, encodeUtf8)
+import qualified Data.Conduit.Combinators     as CC
+import           Data.Text                    (Text)
+import qualified Data.Text                    as T
+import qualified Data.Text.IO                 as T (putStrLn)
+import           Network                      (PortID (..), connectTo)
+import           System.Environment           (getArgs, getProgName)
+import           System.IO                    (BufferMode (..), hClose,
+                                               hSetBuffering, stdin)
+import           TSBot.ClientQuery.Parse
 
 type BS = ByteString
 

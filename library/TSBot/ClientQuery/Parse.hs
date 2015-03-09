@@ -9,14 +9,14 @@ module TSBot.ClientQuery.Parse ( CQResponse (..)
                                , responseP
                                ) where
 
-import Data.ByteString
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Attoparsec.Text
-import Data.Map (Map)
-import qualified Data.Map as M
-import Data.Functor ((<$>))
-import Control.Applicative ((*>), (<*), (<*>), (<**>), (<|>))
+import           Control.Applicative  ((*>), (<*), (<**>), (<*>), (<|>))
+import           Data.Attoparsec.Text
+import           Data.ByteString
+import           Data.Functor         ((<$>))
+import           Data.Map             (Map)
+import qualified Data.Map             as M
+import           Data.Text            (Text)
+import qualified Data.Text            as T
 
 newtype RName = RName  Text deriving (Eq, Ord, Show)
 newtype AName = AName  Text deriving (Eq, Ord, Show)
