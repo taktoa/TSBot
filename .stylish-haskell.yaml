@@ -1,7 +1,7 @@
-columns: 79
+columns: 80
 steps:
 - imports:
-    align: none
+    align: global
 - language_pragmas:
     remove_redundant: true
     style: vertical
