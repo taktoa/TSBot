@@ -1,0 +1,12 @@
+# circle.yml
+machine:
+  services:
+    - docker
+
+dependencies:
+  pre:
+    - docker build -t taktoa/TSBot:$CIRCLE_SHA1 .
+
+test:
+  post:
+    - docker run taktoa/TSBot:$CIRCLE_SHA1 "circle.sh"
