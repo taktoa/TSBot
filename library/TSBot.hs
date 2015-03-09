@@ -9,7 +9,8 @@ import Control.Concurrent (forkIO, killThread)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Resource
 import Data.Conduit
-import Data.Machine
+import qualified Data.Machine as M
+import Data.Conduit.Combinators (encodeUtf8, decodeUtf8)
 import qualified Data.Conduit.Combinators as CC
 import Data.Conduit.Binary hiding (mapM_)
 import Data.Text as T
@@ -46,18 +47,18 @@ telnetBS (Telnet host port) = telnetRaw host port
 
 -- | Telnet wrapper (accepts/sends 'Text')
 telnetText :: Telnet -> Source IO Text -> Sink Text IO () -> IO ()
-telnetText t src sink = telnetBS t (src $= encode utf8) (decode utf8 =$ sink)
+telnetText t src sink = telnetBS t (src $= encodeUtf8) (decodeUtf8 =$ sink)
 
 -- | Telnet wrapper (accepts/sends 'String')
 telnetStr :: Telnet -> Source IO String -> Sink String IO () -> IO ()
-telnetStr t src sink = telnetText t (src $= T.pack) (T.unpack =$ sink)
+telnetStr t src sink = telnetText t (src $= (CC.map T.pack)) ((CC.map T.unpack) =$ sink)
 
 printSink :: Sink Text IO ()
 printSink = awaitForever (liftIO . putStrLn . T.unpack)
 
 readSrc :: Source IO Text
 readSrc = liftIO (stdin `hSetBuffering` LineBuffering)
-          >> sourceHandle stdin $= decode utf8
+          >> sourceHandle stdin $= decodeUtf8
 
 -- | Main function
 main :: IO ()
