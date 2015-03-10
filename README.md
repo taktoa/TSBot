@@ -17,9 +17,6 @@ make build
 # Test package.
 make test
 
-# Benchmark package.
-make bench
-
 # Run executable.
 make run
 

@@ -1,9 +1,6 @@
-.PHONY: all bench build clean configure haddock hpc install repl run test
+.PHONY: all build clean configure haddock hpc install repl run test
 shell = '$$SHELL'
-all: install configure build haddock test hpc bench
-
-bench:
-	cabal bench --jobs
+all: install configure build haddock test hpc
 
 build:
 	cabal build --jobs
@@ -14,7 +11,7 @@ clean: nix-clean
 	if test -d .hpc; then rm -r .hpc; fi
 
 configure:
-	cabal configure --enable-benchmarks --enable-tests
+	cabal configure --enable-tests
 
 haddock:
 	cabal haddock --hyperlink-source
