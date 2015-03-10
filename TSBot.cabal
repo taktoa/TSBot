@@ -52,6 +52,21 @@ test-suite tests
                       , hspec ==2.*
                       , HUnit
                       , QuickCheck
+                      , network
+                      , network-simple
+                      , resourcet
+                      , conduit
+                      , conduit-extra
+                      , conduit-combinators
+                      , courier
+                      , stm
+                      , async
+                      , attoparsec
+                      , bytestring
+                      , text
+                      , transformers
+                      , mtl
+                      , containers
     default-language:   Haskell2010
     ghc-options:        -fhpc -Wall -Werror
     hs-source-dirs:     library
