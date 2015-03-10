@@ -10,7 +10,7 @@ dependencies:
   override:
     - if [[ -e ~/docker/tsbot.tar ]]; then docker load -i ~/docker/tsbot.tar; fi
     - docker build -t taktoa/tsbot:$CIRCLE_SHA1 .
-    - mkdir -p ~/docker; docker save circleci/elasticsearch > ~/docker/tsbot.tar
+    - mkdir -p ~/docker; docker taktoa/tsbot > ~/docker/tsbot.tar
 
 test:
   override:
