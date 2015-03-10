@@ -42,8 +42,8 @@ cqvP =     (CQVBool <$> cqvBoolP)
        <|> (CQVInt  <$> cqvIntP)
        <|> (CQVStr  <$> cqvStrP)
   where
-    cqvBoolP =     ((string "true")  *> return True)
-               <|> ((string "false") *> return False)
+    cqvBoolP =     (string "true"  *> return True)
+               <|> (string "false" *> return False)
     cqvIntP = decimal
     cqvStrP = lettersT
 
@@ -64,10 +64,10 @@ responseP' :: Parser CQResponse
 responseP' = do
   cqn <- rnameP
   atr <- many' (skipSpace >> attrP)
-  return $ CQResponse cqn $ M.fromList atr
+  return . CQResponse cqn $ M.fromList atr
 
 responseP :: Parser (Either Text CQResponse)
 responseP = do
-  res <- ((try (Right <$> responseP')) <|> (Left  <$> takeText))
+  res <- try (Right <$> responseP') <|> (Left  <$> takeText)
   _ <- endOfLine
   return res

@@ -37,7 +37,7 @@ defaultTelnet = Telnet "localhost" 25639
 -- | Raw telnet IO function
 telnetRaw :: String -> Int -> Source IO BS -> Sink BS IO () -> IO ()
 telnetRaw host port src sink = runResourceT $ do
-  let telnetConn = connectTo host $ PortNumber $ fromIntegral port
+  let telnetConn = connectTo host . PortNumber $ fromIntegral port
   (releaseSock, hsock) <- allocate telnetConn hClose
   liftIO $ hsock `hSetBuffering` LineBuffering
   (releaseThread, _) <- allocate (forkIO $ sourceHandle hsock $$ sink) killThread

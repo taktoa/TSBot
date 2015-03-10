@@ -7,6 +7,7 @@ build:
 
 clean: nix-clean
 	cabal clean
+	rm -f *.tix
 	if test -d .cabal-sandbox; then cabal sandbox delete; fi
 	if test -d .hpc; then rm -r .hpc; fi
 
