@@ -4,9 +4,14 @@ machine:
     - docker
 
 dependencies:
-  pre:
+  cache_directories:
+    - "~/docker"
+
+  override:
+    - if [[ -e ~/docker/tsbot.tar ]]; then docker load -i ~/docker/tsbot.tar; fi
     - docker build -t taktoa/tsbot:$CIRCLE_SHA1 .
+    - mkdir -p ~/docker; docker save circleci/elasticsearch > ~/docker/tsbot.tar
 
 test:
-  post:
+  override:
     - docker run taktoa/tsbot:$CIRCLE_SHA1 "circle.sh"
