@@ -4,70 +4,29 @@
 -- | The main TSBot library
 module Web.TSBot (module Web.TSBot) where
 
-import Web.TSBot.ClientQuery.Parse as Web.TSBot
-import Web.TSBot.ClientQuery.Network as Web.TSBot
 -- GENERATE: import New.Module as Web.TSBot
-import           Control.Applicative          ((<*))
-import           Control.Concurrent           (forkIO, killThread)
-import           Control.Monad                (replicateM_)
-import           Control.Monad.IO.Class       (MonadIO, liftIO)
-import           Control.Monad.Trans.Resource
+import           Control.Monad.IO.Class            (liftIO)
 import           Data.Attoparsec.Text
-import           Data.ByteString              (ByteString)
-import qualified Data.ByteString.Char8        as B
 import           Data.Conduit
-import           Data.Conduit.Binary          hiding (mapM_)
-import           Data.Conduit.Combinators     (decodeUtf8, encodeUtf8)
-import qualified Data.Conduit.Combinators     as CC
-import           Data.Text                    (Text)
-import qualified Data.Text                    as T
-import qualified Data.Text.IO                 as T (putStrLn)
-import           Network                      (PortID (..), connectTo)
-import           System.Environment           (getArgs, getProgName)
-import           System.IO                    (BufferMode (..), Handle, hClose,
-                                               hFlush, hSetBuffering, stdin)
+import           Data.Conduit.Binary               hiding (mapM_)
+import           Data.Conduit.Combinators          (decodeUtf8)
+import qualified Data.Conduit.Combinators          as CC
+import           Data.Text                         (Text)
+import qualified Data.Text                         as T
+import qualified Data.Text.IO                      as T (putStrLn)
+import           System.IO                         (BufferMode (..),
+                                                    hSetBuffering, stdin)
+import           Web.TSBot.ClientQuery.Escape      as Web.TSBot
+import           Web.TSBot.ClientQuery.Parse       as Web.TSBot
+import           Web.TSBot.ClientQuery.PrettyPrint as Web.TSBot
+import           Web.TSBot.ClientQuery.Response    as Web.TSBot
+import           Web.TSBot.ClientQuery.Telnet      as Web.TSBot
 
-type BS = ByteString
-
-data Telnet = Telnet { tHost :: String
-                     , tPort :: Int
-                     }
-
-type TelnetH = IO Handle
-
--- | Default telnet settings for TSClientQuery
-defaultTelnet :: Telnet
-defaultTelnet = Telnet "localhost" 25639
-
--- | Default telnet processor
-defaultTProc :: Telnet -> TelnetH
-defaultTProc (Telnet h p) = connectTo h . PortNumber $ fromIntegral p
-
--- | Default telnet handle
-defaultTelnetH :: TelnetH
-defaultTelnetH = defaultTProc defaultTelnet
-
--- | Raw telnet IO function
-telnetRaw :: TelnetH -> Source IO BS -> Sink BS IO () -> IO ()
-telnetRaw conn src sink = runResourceT $ do
-  (releaseSock, hsock) <- allocate conn hClose
-  liftIO $ hsock `hSetBuffering` LineBuffering
-  (releaseThread, _) <- allocate (forkIO $ sourceHandle hsock $$ sink) killThread
-  liftIO $ src $$ sinkHandle hsock
-  release releaseThread
-  release releaseSock
-
--- | Telnet wrapper (accepts/sends 'ByteString')
-telnetBS :: TelnetH -> Source IO BS -> Sink BS IO () -> IO ()
-telnetBS = telnetRaw
-
--- | Telnet wrapper (accepts/sends 'Text')
-telnetText :: TelnetH -> Source IO Text -> Sink Text IO () -> IO ()
-telnetText t src sink = telnetBS t (src $= encodeUtf8) (decodeUtf8 =$ sink)
-
+-- | Conduit that packs 'String' into 'Text'
 toText :: (Monad m) => Conduit String m Text
 toText = CC.map T.pack
 
+-- | Conduit that unpacks 'Text' into 'String'
 unText :: (Monad m) => Conduit Text m String
 unText = CC.map T.unpack
 
@@ -75,30 +34,38 @@ unText = CC.map T.unpack
 telnetStr :: TelnetH -> Source IO String -> Sink String IO () -> IO ()
 telnetStr t src sink = telnetText t (src $= toText) (unText =$ sink)
 
+-- | Generic function that lifts simple IO functions to 'Sink's
 ioSink :: (a -> IO ()) -> Sink a IO ()
 ioSink f = awaitForever (liftIO . f)
 
+-- | Run 'print' on any data received
 printSink :: Show a => Sink a IO ()
 printSink = ioSink print
 
-bsputSink :: Sink ByteString IO ()
-bsputSink = ioSink B.putStrLn
-
+-- | Print out 'Text' line-by-line
 tputSink :: Sink Text IO ()
 tputSink = ioSink T.putStrLn
 
+-- | Print out 'String's line-by-line
 sputSink :: Sink String IO ()
 sputSink = ioSink putStrLn
 
+-- | Read input from stdin
 readSrc :: Source IO Text
 readSrc = liftIO (stdin `hSetBuffering` LineBuffering)
           >> sourceHandle stdin $= decodeUtf8
 
+-- | A parse conduit for 'responseP'
 parseCond :: Conduit Text IO (Either String CQResponse)
-parseCond = awaitForever (yield . parseOnly resP)
+parseCond = awaitForever (yield . parseOnly responseP)
 
+-- | A conduit that pretty-prints 'CQResponse's
+prettyCond' :: Conduit CQResponse IO Text
+prettyCond' = awaitForever (yield . resPretty)
+
+-- | A conduit that pretty-prints 'CQResponse's and handles parse errors
 prettyCond :: Conduit (Either String CQResponse) IO Text
-prettyCond = awaitForever (yield . resPretty)
+prettyCond = awaitForever (yield . either T.pack resPretty)
 
 -- | Main function
 main :: IO ()

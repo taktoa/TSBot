@@ -34,7 +34,9 @@ library
     exposed-modules:    Web.TSBot
                         Web.TSBot.ClientQuery.PrettyPrint
                         Web.TSBot.ClientQuery.Parse
-                        Web.TSBot.ClientQuery.Network
+                        Web.TSBot.ClientQuery.Telnet
+                        Web.TSBot.ClientQuery.Response
+                        Web.TSBot.ClientQuery.Escape
                         -- GENERATE: New.Module
     ghc-options:        -Wall
     ghc-prof-options:   -auto-all -prof
@@ -77,12 +79,16 @@ test-suite tests
     other-modules:      Web.TSBot
                         Web.TSBot.ClientQuery.PrettyPrint
                         Web.TSBot.ClientQuery.Parse
-                        Web.TSBot.ClientQuery.Network
+                        Web.TSBot.ClientQuery.Telnet
+                        Web.TSBot.ClientQuery.Response
+                        Web.TSBot.ClientQuery.Escape
                         -- GENERATE: New.Module
                         Web.TSBotSpec
                         Web.TSBot.ClientQuery.PrettyPrintSpec
                         Web.TSBot.ClientQuery.ParseSpec
-                        Web.TSBot.ClientQuery.NetworkSpec
+                        Web.TSBot.ClientQuery.TelnetSpec
+                        Web.TSBot.ClientQuery.ResponseSpec
+                        Web.TSBot.ClientQuery.EscapeSpec
                         -- GENERATE: New.ModuleSpec
     type:               exitcode-stdio-1.0
 
