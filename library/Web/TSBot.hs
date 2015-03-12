@@ -2,9 +2,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | The main TSBot library
-module TSBot (module TSBot) where
+module Web.TSBot (module Web.TSBot) where
 
--- GENERATE: import New.Module as TSBot
+import Web.TSBot.ClientQuery.Parse as Web.TSBot
+import Web.TSBot.ClientQuery.Network as Web.TSBot
+-- GENERATE: import New.Module as Web.TSBot
 import           Control.Applicative          ((<*))
 import           Control.Concurrent           (forkIO, killThread)
 import           Control.Monad                (replicateM_)
@@ -24,7 +26,6 @@ import           Network                      (PortID (..), connectTo)
 import           System.Environment           (getArgs, getProgName)
 import           System.IO                    (BufferMode (..), Handle, hClose,
                                                hFlush, hSetBuffering, stdin)
-import           TSBot.ClientQuery.Parse
 
 type BS = ByteString
 

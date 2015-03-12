@@ -45,5 +45,7 @@ run:
 	cabal run --jobs TSBot
 
 test:
+	rm -f *.tix
 	cabal test --jobs
 	cabal check
+	rm -f *.tix

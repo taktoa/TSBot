@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Language.Haskell.HLint (hlint)
+import Language.Haskell.HLint (hlint, suggestionSeverity, Severity (..))
 import System.Exit (exitFailure, exitSuccess)
 
 arguments :: [String]
@@ -13,4 +13,5 @@ arguments =
 main :: IO ()
 main = do
     hints <- hlint arguments
-    if null hints then exitSuccess else exitFailure
+    let errorHints = filter ((== Error) . suggestionSeverity) hints
+    if null errorHints then exitSuccess else exitFailure

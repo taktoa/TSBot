@@ -31,8 +31,10 @@ library
                       , mtl
                       , containers
     default-language:   Haskell2010
-    exposed-modules:    TSBot
-                        TSBot.ClientQuery.Parse
+    exposed-modules:    Web.TSBot
+                        Web.TSBot.ClientQuery.PrettyPrint
+                        Web.TSBot.ClientQuery.Parse
+                        Web.TSBot.ClientQuery.Network
                         -- GENERATE: New.Module
     ghc-options:        -Wall
     ghc-prof-options:   -auto-all -prof
@@ -72,11 +74,15 @@ test-suite tests
     hs-source-dirs:     library
                         test-suite
     main-is:            Spec.hs
-    other-modules:      TSBot
-                        TSBot.ClientQuery.Parse
+    other-modules:      Web.TSBot
+                        Web.TSBot.ClientQuery.PrettyPrint
+                        Web.TSBot.ClientQuery.Parse
+                        Web.TSBot.ClientQuery.Network
                         -- GENERATE: New.Module
-                        TSBotSpec
-                        TSBot.ClientQuery.ParseSpec
+                        Web.TSBotSpec
+                        Web.TSBot.ClientQuery.PrettyPrintSpec
+                        Web.TSBot.ClientQuery.ParseSpec
+                        Web.TSBot.ClientQuery.NetworkSpec
                         -- GENERATE: New.ModuleSpec
     type:               exitcode-stdio-1.0
 

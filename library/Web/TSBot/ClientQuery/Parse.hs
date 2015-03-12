@@ -3,16 +3,16 @@
 {-# LANGUAGE TupleSections     #-}
 
 -- | TODO
-module TSBot.ClientQuery.Parse ( CQR (..)
-                               , CQValue (..)
-                               , AName (..)
-                               , CQResponse
-                               , resP
-                               , resPretty
-                               , Esc (..)
-                               , escP
-                               ) where
-
+module Web.TSBot.ClientQuery.Parse
+  ( CQR (..)
+  , CQValue (..)
+  , AName (..)
+  , CQResponse
+  , resP
+  , resPretty
+  , Esc (..)
+  , escP
+  ) where
 
 import           Control.Applicative  ((*>), (<*), (<**>), (<*>), (<|>))
 import           Data.Attoparsec.Text as AP hiding (take)
@@ -101,51 +101,41 @@ escPP (EEsc 's')  = ' '
 escPP (EEsc 'p')  = '|'
 escPP (EEsc '/')  = '/'
 escPP (EEsc '\\') = '\\'
-escPP (EEsc c)    = error $ "unknown escaped character: " ++ [c]
+escPP (EEsc c)    = error $ "unknown escaped character: " <> [c]
 escPP (EChar c)   = c
 
 unescape :: Text -> Text
-unescape = T.pack . either id (map escPP) . parseOnly (escP <* endOfInput)
+unescape = T.pack . either id (fmap escPP) . parseOnly (escP <* endOfInput)
 
 cqvPretty :: CQValue -> String
 cqvPretty (CQVNil) = error "GHC is broken"
-cqvPretty (CQVStr s) = "\"" ++ T.unpack s ++ "\""
+cqvPretty (CQVStr s) = "\"" <> T.unpack s <> "\""
 cqvPretty (CQVInt i) = show i
 cqvPretty (CQVBool True) = "true"
 cqvPretty (CQVBool False) = "false"
 
 attrPretty :: AName -> CQValue -> String
 attrPretty (AName a) CQVNil = T.unpack a
-attrPretty (AName a) c = T.unpack a ++ " => " ++ cqvPretty c
+attrPretty (AName a) c = T.unpack a <> " => " <> cqvPretty c
 
 cqrPretty :: CQR -> String
-cqrPretty = wrapPretty . map (uncurry attrPretty) . M.toList . unCQR
+cqrPretty = wrapPretty . fmap (uncurry attrPretty) . M.toList . unCQR
   where
     sep = ",\n   "
     ls = length sep
-    wrapPretty' i = let s = concatMap (++ sep) i
+    wrapPretty' i = let s = concatMap (<> sep) i
                     in  take (length s - ls) s
-    wrapPretty i = "{ " ++ wrapPretty' i ++ " }"
+    wrapPretty i = "{ " <> wrapPretty' i <> " }"
 
 resPretty' :: CQResponse -> String
 resPretty' []     = []
-resPretty' [c]    = "{" ++ cqrPretty c ++ "}"
-resPretty' (c:cs) = "{" ++ first ++ "\n" ++ rest ++ "}"
+resPretty' [c]    = "{" <> cqrPretty c <> "}"
+resPretty' (c:cs) = "{" <> first <> "\n" <> rest <> "}"
   where
-    rp r = " " ++ cqrPretty r ++ "\n"
+    rp r = " " <> cqrPretty r <> "\n"
     first = cqrPretty c
     rest = concatMap rp cs
 
 resPretty :: Either String CQResponse -> Text
 resPretty (Left a)  = T.pack a
 resPretty (Right a) = T.pack $ resPretty' a
-
-{-
-
-Response parsing:
-split on |
-split on space
-split into identifier and value
-deescape value
-
--}
