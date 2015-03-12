@@ -5,13 +5,15 @@
 module TSBot (module TSBot) where
 
 -- GENERATE: import New.Module as TSBot
+import           Control.Applicative          ((<*))
 import           Control.Concurrent           (forkIO, killThread)
+import           Control.Monad                (replicateM_)
 import           Control.Monad.IO.Class       (MonadIO, liftIO)
 import           Control.Monad.Trans.Resource
+import           Data.Attoparsec.Text
 import           Data.ByteString              (ByteString)
 import qualified Data.ByteString.Char8        as B
 import           Data.Conduit
-import           Data.Conduit.Attoparsec
 import           Data.Conduit.Binary          hiding (mapM_)
 import           Data.Conduit.Combinators     (decodeUtf8, encodeUtf8)
 import qualified Data.Conduit.Combinators     as CC
@@ -20,8 +22,8 @@ import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as T (putStrLn)
 import           Network                      (PortID (..), connectTo)
 import           System.Environment           (getArgs, getProgName)
-import           System.IO                    (BufferMode (..), hClose,
-                                               hSetBuffering, stdin)
+import           System.IO                    (BufferMode (..), Handle, hClose,
+                                               hFlush, hSetBuffering, stdin)
 import           TSBot.ClientQuery.Parse
 
 type BS = ByteString
@@ -30,15 +32,24 @@ data Telnet = Telnet { tHost :: String
                      , tPort :: Int
                      }
 
+type TelnetH = IO Handle
+
 -- | Default telnet settings for TSClientQuery
 defaultTelnet :: Telnet
 defaultTelnet = Telnet "localhost" 25639
 
+-- | Default telnet processor
+defaultTProc :: Telnet -> TelnetH
+defaultTProc (Telnet h p) = connectTo h . PortNumber $ fromIntegral p
+
+-- | Default telnet handle
+defaultTelnetH :: TelnetH
+defaultTelnetH = defaultTProc defaultTelnet
+
 -- | Raw telnet IO function
-telnetRaw :: String -> Int -> Source IO BS -> Sink BS IO () -> IO ()
-telnetRaw host port src sink = runResourceT $ do
-  let telnetConn = connectTo host . PortNumber $ fromIntegral port
-  (releaseSock, hsock) <- allocate telnetConn hClose
+telnetRaw :: TelnetH -> Source IO BS -> Sink BS IO () -> IO ()
+telnetRaw conn src sink = runResourceT $ do
+  (releaseSock, hsock) <- allocate conn hClose
   liftIO $ hsock `hSetBuffering` LineBuffering
   (releaseThread, _) <- allocate (forkIO $ sourceHandle hsock $$ sink) killThread
   liftIO $ src $$ sinkHandle hsock
@@ -46,11 +57,11 @@ telnetRaw host port src sink = runResourceT $ do
   release releaseSock
 
 -- | Telnet wrapper (accepts/sends 'ByteString')
-telnetBS :: Telnet -> Source IO BS -> Sink BS IO () -> IO ()
-telnetBS (Telnet host port) = telnetRaw host port
+telnetBS :: TelnetH -> Source IO BS -> Sink BS IO () -> IO ()
+telnetBS = telnetRaw
 
 -- | Telnet wrapper (accepts/sends 'Text')
-telnetText :: Telnet -> Source IO Text -> Sink Text IO () -> IO ()
+telnetText :: TelnetH -> Source IO Text -> Sink Text IO () -> IO ()
 telnetText t src sink = telnetBS t (src $= encodeUtf8) (decodeUtf8 =$ sink)
 
 toText :: (Monad m) => Conduit String m Text
@@ -60,7 +71,7 @@ unText :: (Monad m) => Conduit Text m String
 unText = CC.map T.unpack
 
 -- | Telnet wrapper (accepts/sends 'String')
-telnetStr :: Telnet -> Source IO String -> Sink String IO () -> IO ()
+telnetStr :: TelnetH -> Source IO String -> Sink String IO () -> IO ()
 telnetStr t src sink = telnetText t (src $= toText) (unText =$ sink)
 
 ioSink :: (a -> IO ()) -> Sink a IO ()
@@ -82,6 +93,12 @@ readSrc :: Source IO Text
 readSrc = liftIO (stdin `hSetBuffering` LineBuffering)
           >> sourceHandle stdin $= decodeUtf8
 
+parseCond :: Conduit Text IO (Either String CQResponse)
+parseCond = awaitForever (yield . parseOnly resP)
+
+prettyCond :: Conduit (Either String CQResponse) IO Text
+prettyCond = awaitForever (yield . resPretty)
+
 -- | Main function
 main :: IO ()
-main = telnetText defaultTelnet readSrc (conduitParserEither responseP =$ printSink)
+main = telnetText defaultTelnetH readSrc (parseCond =$= prettyCond =$ tputSink)
