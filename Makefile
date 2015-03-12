@@ -35,7 +35,7 @@ nix-init: nix-clean
 	[ `cabal2nix --version` = "2.0" ] && cabal2nix . > default.nix;
 
 nix-shell: nix-init
-	nix-shell --command 'make install && IN_NIX=nix $(shell)'
+	nix-shell --command 'make install && IN_NIX="nix " $(shell)'
 	make clean
 
 repl:
