@@ -30,7 +30,7 @@ nix-clean:
 	if test -e default.nix; then rm default.nix; fi
 	if test -e shell.nix; then rm shell.nix; fi
 
-nix-init: nix-clean
+nix-init: clean
 	[ `cabal2nix --version` = "2.0" ] && cabal2nix --shell . > shell.nix;
 	[ `cabal2nix --version` = "2.0" ] && cabal2nix . > default.nix;
 
