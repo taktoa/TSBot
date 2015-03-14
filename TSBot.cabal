@@ -41,6 +41,7 @@ library
     ghc-options:        -Wall
     ghc-prof-options:   -auto-all -prof
     hs-source-dirs:     library
+    default-extensions: OverloadedStrings
 
 executable TSBot
     build-depends:      base
@@ -49,6 +50,7 @@ executable TSBot
     ghc-prof-options:   -auto-all -prof
     hs-source-dirs:     executable
     main-is:            Main.hs
+    default-extensions: OverloadedStrings
 
 test-suite tests
     build-depends:      base
@@ -91,6 +93,7 @@ test-suite tests
                         Web.TSBot.ClientQuery.EscapeSpec
                         -- GENERATE: New.ModuleSpec
     type:               exitcode-stdio-1.0
+    default-extensions: OverloadedStrings
 
 test-suite examples
     build-depends:      base
