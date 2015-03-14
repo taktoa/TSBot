@@ -1,27 +1,29 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- | TODO
-module Web.TSBot.ClientQuery.PrettyPrint (resPretty) where
+-- | Pretty- and ugly-printers for 'CQResponse'
+module Web.TSBot.ClientQuery.PrettyPrint (resPretty, resPrint) where
 
+import           Data.List                      (partition)
 import           Data.Monoid                    ((<>))
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
+import           Web.TSBot.ClientQuery.Escape   (escape)
 import           Web.TSBot.ClientQuery.Response
 
 cqvPretty :: CQValue -> String
-cqvPretty (CQVNil) = error "GHC is broken"
+cqvPretty (CQVNil) = ""
 cqvPretty (CQVStr s) = "\"" <> T.unpack s <> "\""
 cqvPretty (CQVInt i) = show i
 cqvPretty (CQVBool True) = "true"
 cqvPretty (CQVBool False) = "false"
 
-attrPretty :: AName -> CQValue -> String
-attrPretty (AName a) CQVNil = T.unpack a
-attrPretty (AName a) c = T.unpack a <> " => " <> cqvPretty c
+attrPretty :: Text -> CQValue -> String
+attrPretty a CQVNil = T.unpack a
+attrPretty a c = T.unpack a <> " => " <> cqvPretty c
 
 cqrPretty :: CQR -> String
-cqrPretty = wrapPretty . fmap (uncurry attrPretty) . toList
+cqrPretty = wrapPretty . fmap (uncurry attrPretty) . toListCQR
   where
     sep = ",\n   "
     ls = length sep
@@ -41,3 +43,31 @@ resPretty' (c:cs) = "{" <> first <> "\n" <> rest <> "}"
 -- | Pretty print a 'CQResponse'
 resPretty :: CQResponse -> Text
 resPretty = T.pack . resPretty'
+
+
+cqvPrint :: CQValue -> String
+cqvPrint CQVNil = ""
+cqvPrint (CQVInt i) = show (i :: Int)
+cqvPrint (CQVBool True) = "true"
+cqvPrint (CQVBool False) = "false"
+cqvPrint (CQVStr s) =  T.unpack (escape s)
+
+attrPrint :: Text -> CQValue -> String
+attrPrint a CQVNil = T.unpack a
+attrPrint a c = T.unpack a <> "=" <> cqvPrint c
+
+cqrPrint :: CQR -> String
+cqrPrint c = takeExcept 1 $ concatMap ((<> " ") . uncurry attrPrint) sorted
+  where
+    isNil n = case n of
+               (_, CQVNil) -> True
+               _           -> False
+    (s1, s2) = partition isNil $ toListCQR c
+    sorted = s1 <> s2
+
+resPrint :: CQResponse -> Text
+resPrint = T.pack . takeExcept 1 . concatMap ((<> "|") . cqrPrint )
+
+takeExcept :: Int -> [a] -> [a]
+takeExcept _ [] = []
+takeExcept i xs = take (length xs - i) xs

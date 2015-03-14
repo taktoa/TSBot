@@ -5,13 +5,14 @@
 -- | TODO
 module Web.TSBot.ClientQuery.Parse (responseP) where
 
-import           Control.Applicative            ((*>), (<|>))
+import           Control.Applicative            ((*>), (<*), (<*>), (<|>))
+import           Control.Monad                  (MonadPlus (..))
 import           Data.Attoparsec.Text           as AP hiding (take)
 import           Data.Char                      (isSpace)
 import           Data.Functor                   ((<$>))
 import           Data.Map                       (Map)
 import qualified Data.Map                       as M
-import           Data.Monoid                    ((<>))
+import           Data.Monoid
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
 import           Web.TSBot.ClientQuery.Escape
@@ -25,7 +26,8 @@ cqvP =     (CQVBool <$> cqvBoolP)
     cqvBoolP =     (string "true"  *> return True)
                <|> (string "false" *> return False)
     cqvIntP = decimal
-    cqvStrP = unescape <$> AP.takeWhile (not . isSpace)
+    isEsc x = isSpace x || (x == '|')
+    cqvStrP = unescape <$> AP.takeWhile (not . isEsc)
 
 anameP :: Parser AName
 anameP = AName <$> T.pack <$> many1 (char '_' <|> letter)
@@ -40,14 +42,17 @@ attrP = nnAttrP <|> nilP
       cqv <- cqvP
       return (an, cqv)
 
+sepBy0 :: Parser a -> Parser s -> Parser [a]
+sepBy0 val sep = (++) <$> many' (val <* sep) <*> ((return <$> val) <|> return [])
+
 cqrP :: Parser CQR
 cqrP = do
-  attrs <- attrP `sepBy` many1 (char ' ')
+  attrs <- attrP `sepBy0` many1 (char ' ')
   return . CQR $ M.fromList attrs
 
 -- | A parser for 'CQResponse's
 responseP :: Parser CQResponse
 responseP = do
-  r <- cqrP `sepBy` char '|'
+  r <- cqrP `sepBy0` char '|'
   _ <- many' endOfLine
   return r
