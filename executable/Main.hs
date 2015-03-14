@@ -1,6 +1,6 @@
 module Main (main) where
 
-import qualified TSBot
+import qualified Web.TSBot
 
 main :: IO ()
-main = TSBot.main
+main = Web.TSBot.main

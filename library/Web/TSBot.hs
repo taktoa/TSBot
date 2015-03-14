@@ -11,7 +11,7 @@ import           Data.Conduit
 import           Data.Conduit.Binary               hiding (mapM_)
 import           Data.Conduit.Combinators          (decodeUtf8)
 import qualified Data.Conduit.Combinators          as CC
-import           Data.Text                         (Text)
+import           Data.Text                         (Text, pack, unpack)
 import qualified Data.Text                         as T
 import qualified Data.Text.IO                      as T (putStrLn)
 import           System.IO                         (BufferMode (..),
@@ -22,17 +22,8 @@ import           Web.TSBot.ClientQuery.PrettyPrint as Web.TSBot
 import           Web.TSBot.ClientQuery.Response    as Web.TSBot
 import           Web.TSBot.ClientQuery.Telnet      as Web.TSBot
 
--- | Conduit that packs 'String' into 'Text'
-toText :: (Monad m) => Conduit String m Text
-toText = CC.map T.pack
-
--- | Conduit that unpacks 'Text' into 'String'
-unText :: (Monad m) => Conduit Text m String
-unText = CC.map T.unpack
-
--- | Telnet wrapper (accepts/sends 'String')
-telnetStr :: TelnetH -> Source IO String -> Sink String IO () -> IO ()
-telnetStr t src sink = telnetText t (src $= toText) (unText =$ sink)
+toCond :: Monad m => (a -> b) -> Conduit a m b
+toCond = CC.map
 
 -- | Generic function that lifts simple IO functions to 'Sink's
 ioSink :: (a -> IO ()) -> Sink a IO ()
@@ -47,26 +38,33 @@ tputSink :: Sink Text IO ()
 tputSink = ioSink T.putStrLn
 
 -- | Print out 'String's line-by-line
-sputSink :: Sink String IO ()
-sputSink = ioSink putStrLn
-
--- | Read input from stdin
 readSrc :: Source IO Text
 readSrc = liftIO (stdin `hSetBuffering` LineBuffering)
           >> sourceHandle stdin $= decodeUtf8
 
 -- | A parse conduit for 'responseP'
 parseCond :: Conduit Text IO (Either String CQResponse)
-parseCond = awaitForever (yield . parseOnly responseP)
+parseCond = toCond $ parseOnly responseP
 
 -- | A conduit that pretty-prints 'CQResponse's
 prettyCond' :: Conduit CQResponse IO Text
-prettyCond' = awaitForever (yield . resPretty)
+prettyCond' = toCond resPretty
 
 -- | A conduit that pretty-prints 'CQResponse's and handles parse errors
 prettyCond :: Conduit (Either String CQResponse) IO Text
-prettyCond = awaitForever (yield . either T.pack resPretty)
+prettyCond = toCond $ either T.pack resPretty
+
+-- | A conduit that ugly-prints 'CQResponse's and handles parse errors
+rprintCond' :: Conduit CQResponse IO Text
+rprintCond' = toCond resPrint
+
+-- | A conduit that ugly-prints 'CQResponse's and handles parse errors
+rprintCond :: Conduit (Either String CQResponse) IO Text
+rprintCond = toCond $ either T.pack resPrint
 
 -- | Main function
 main :: IO ()
-main = telnetText defaultTelnetH readSrc (parseCond =$= prettyCond =$ tputSink)
+main = telnetText
+       defaultTelnetH
+       readSrc
+       (parseCond =$= rprintCond =$ tputSink)
