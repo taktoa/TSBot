@@ -5,9 +5,12 @@ module Web.TSBot.ClientQuery.Response
        ( CQR (..)
        , CQValue (..)
        , AName (..)
+       , CQError (..)
+       , ECQR
        , CQResponse
        , toListCQR
        , fromListCQR
+       , matching, matching_
        , retrieve
        , insert
        )
@@ -16,6 +19,7 @@ module Web.TSBot.ClientQuery.Response
 import           Control.Arrow (first)
 import           Data.Map      (Map)
 import qualified Data.Map      as M (fromList, insert, lookup, toList)
+import           Data.Maybe    (isJust)
 import           Data.Monoid   ((<>))
 import           Data.Text     (Text)
 
@@ -39,6 +43,11 @@ instance Show CQR where
 -- | Type alias for a list of CQR
 type CQResponse = [CQR]
 
+data CQError = CQParseError Text
+             deriving (Eq, Show, Read)
+
+type ECQR = Either CQError CQResponse
+
 -- Should probably figure out how to just make these functions
 -- Traversable/Foldable instances or whatever
 
@@ -53,6 +62,14 @@ fromListCQR = CQR . M.fromList . map (first AName)
 -- | Lookup a value based on its attribute name
 retrieve :: AName -> CQR -> Maybe CQValue
 retrieve a (CQR m) = M.lookup a m
+
+-- | Get all responses that include a certain (Text, CQValue)
+matching :: (Text, CQValue) -> CQResponse -> CQResponse
+matching a = filter (elem a . toListCQR)
+
+-- | Get all responses that include a certain AName
+matching_ :: AName -> CQResponse -> CQResponse
+matching_ a = filter (isJust . retrieve a)
 
 -- | Update a CQR with a new value
 insert :: AName -> CQValue -> CQR -> CQR

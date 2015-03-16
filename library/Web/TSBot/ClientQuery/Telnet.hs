@@ -30,7 +30,7 @@ data Telnet = Telnet { tHost :: String -- ^ The hostname
                      }
 
 -- | Type alias for telnet connection handles
-type TelnetH = IO Handle
+type TelnetH = ResourceT IO (ReleaseKey, Handle)
 
 -- | Default telnet settings for TSClientQuery
 defaultTelnet :: Telnet
@@ -40,7 +40,10 @@ defaultTelnet = Telnet "localhost" 25639
 -- | Wrap this in whatever IO shenanigans you want for initializing
 -- | your telnet connection
 defaultTProc :: Telnet -> TelnetH
-defaultTProc (Telnet h p) = connectTo h . PortNumber $ fromIntegral p
+defaultTProc (Telnet h p) = do
+  (releaseSock, hsock) <- allocate (connectTo h . PortNumber $ fromIntegral p) hClose
+  liftIO $ hsock `hSetBuffering` LineBuffering
+  return (releaseSock, hsock)
 
 -- | Default telnet connection handle
 defaultTelnetH :: TelnetH
@@ -48,8 +51,7 @@ defaultTelnetH = defaultTProc defaultTelnet
 
 telnetRaw :: TelnetH -> Source IO BS -> Sink BS IO () -> IO ()
 telnetRaw conn src sink = runResourceT $ do
-  (releaseSock, hsock) <- allocate conn hClose
-  liftIO $ hsock `hSetBuffering` LineBuffering
+  (releaseSock, hsock) <- conn
   (releaseThread, _) <- allocate (forkIO $ sourceHandle hsock $$ sink) killThread
   liftIO $ src $$ sinkHandle hsock
   release releaseThread

@@ -6,6 +6,7 @@ module Web.TSBotSpec (spec) where
 
 import           Control.Applicative                ((*>), (<*), (<**>), (<*>),
                                                      (<|>))
+import           Control.Monad                      (forM_)
 import           Data.Attoparsec.Text
 import           Data.Conduit
 import           Data.Functor                       ((<$>))
@@ -44,7 +45,7 @@ parseCondInv = monadicIO $ do
   assert $ inv == Right input
 
 spec :: Spec
-spec =
+spec = do
   describe "parseCond" $ do
     context "when given an empty string" $ do
       it "returns [fromListCQR []]" $ do

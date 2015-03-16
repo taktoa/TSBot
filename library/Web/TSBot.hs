@@ -5,15 +5,23 @@
 module Web.TSBot (module Web.TSBot) where
 
 -- GENERATE: import New.Module as Web.TSBot
+import           Control.Concurrent                (threadDelay)
+import           Control.Concurrent.STM
+import           Control.Concurrent.STM.TChan
+import           Control.Monad                     (forever)
 import           Control.Monad.IO.Class            (liftIO)
 import           Data.Attoparsec.Text
+import           Data.ByteString.Char8             (hPutStrLn)
 import           Data.Conduit
-import           Data.Conduit.Binary               hiding (mapM_)
+import           Data.Conduit.Binary               hiding (forM_, mapM_)
 import           Data.Conduit.Combinators          (decodeUtf8)
 import qualified Data.Conduit.Combinators          as CC
+import           Data.Foldable                     (forM_, mapM_)
+import           Data.Monoid                       ((<>))
 import           Data.Text                         (Text, pack, unpack)
 import qualified Data.Text                         as T
 import qualified Data.Text.IO                      as T (putStrLn)
+import           Prelude                           hiding (mapM_)
 import           System.IO                         (BufferMode (..),
                                                     hSetBuffering, stdin)
 import           Web.TSBot.ClientQuery.Escape      as Web.TSBot
@@ -21,6 +29,9 @@ import           Web.TSBot.ClientQuery.Parse       as Web.TSBot
 import           Web.TSBot.ClientQuery.PrettyPrint as Web.TSBot
 import           Web.TSBot.ClientQuery.Response    as Web.TSBot
 import           Web.TSBot.ClientQuery.Telnet      as Web.TSBot
+
+tshow :: Show a => a -> Text
+tshow = pack . show
 
 toCond :: Monad m => (a -> b) -> Conduit a m b
 toCond = CC.map
@@ -43,28 +54,94 @@ readSrc = liftIO (stdin `hSetBuffering` LineBuffering)
           >> sourceHandle stdin $= decodeUtf8
 
 -- | A parse conduit for 'responseP'
-parseCond :: Conduit Text IO (Either String CQResponse)
-parseCond = toCond $ parseOnly responseP
+parseCond :: Conduit Text IO ECQR
+parseCond = toCond (conv . parseOnly responseP)
+  where
+    conv (Left s)  = Left $ CQParseError $ pack s
+    conv (Right r) = Right r
 
 -- | A conduit that pretty-prints 'CQResponse's
 prettyCond' :: Conduit CQResponse IO Text
 prettyCond' = toCond resPretty
 
--- | A conduit that pretty-prints 'CQResponse's and handles parse errors
-prettyCond :: Conduit (Either String CQResponse) IO Text
-prettyCond = toCond $ either T.pack resPretty
+-- | A conduit that pretty-prints 'ECQR's
+prettyCond :: Conduit ECQR IO Text
+prettyCond = toCond $ either tshow resPretty
 
--- | A conduit that ugly-prints 'CQResponse's and handles parse errors
+-- | A conduit that ugly-prints 'CQResponse's
 rprintCond' :: Conduit CQResponse IO Text
 rprintCond' = toCond resPrint
 
--- | A conduit that ugly-prints 'CQResponse's and handles parse errors
-rprintCond :: Conduit (Either String CQResponse) IO Text
-rprintCond = toCond $ either T.pack resPrint
+-- | A conduit that ugly-prints 'ECQR's
+rprintCond :: Conduit ECQR IO Text
+rprintCond = toCond $ either tshow resPrint
+
+(|>) :: a -> (a -> b) -> b
+x |> y = y x
+
+(~~>) :: (a -> CQResponse) -> (Text, CQValue) -> (a -> CQResponse)
+x ~~> y = x |-> matching y
+
+(|->) :: (a -> b) -> (b -> c) -> (a -> c)
+x |-> y = y . x
+
+(|~>) :: Monad m => (a -> [t]) -> (t -> m ()) -> a -> m ()
+x |~> y = x
+          |-> \i -> case i of
+                           [a] -> y a
+                           _   -> return ()
+
+
+testCatchEvent :: Conduit ECQR IO Text
+testCatchEvent = awaitForever bprd
+  where
+    write' :: Show a => Text -> a -> Text
+    write' x y = "sendtextmessage targetmode=2 msg=" <>
+                 escape ("PREFIX" <> x <> pack (show y))
+    write x y = yield (write' x y <> "\n")
+--    (|>) = flip ($)
+    beg = matching
+    bprd (Left  s) = write "There was an error: " s
+    bprd (Right c) = prd c
+    prd = beg ("notifytextmessage", CQVNil)
+          ~~> ("targetmode", CQVInt 2)
+          |~> (retrieve (AName "msg")
+          |-> mapM_ (write "Message: "))
+
+
+
+zipCond :: Monad m => a -> Conduit b m (a, b)
+zipCond x = awaitForever $ \i -> yield (x, i)
+
+discCond :: Monad m => Conduit (a, b) m b
+discCond = awaitForever $ \(_, i) -> yield i
+
+tchanSink :: Show i => Text -> TChan i -> Sink i IO ()
+tchanSink t c = awaitForever $ \i -> liftIO $ do
+  atomically $ writeTChan c i
+  T.putStrLn $ "Wrote to TChan " <> t <> ": " <> pack (show i)
+
+
+tchanSrc :: Show i => Text -> TChan i -> Source IO i
+tchanSrc t c = forever $ do
+  liftIO $ threadDelay 1000000
+  v <- liftIO $ atomically $ readTChan c
+  liftIO $ threadDelay 100000
+  liftIO $ T.putStrLn $ "Read from TChan " <> t <> ": " <> pack (show v)
+  yield v
+
 
 -- | Main function
 main :: IO ()
-main = telnetText
-       defaultTelnetH
-       readSrc
-       (parseCond =$= rprintCond =$ tputSink)
+main = do
+  recv <- newTChanIO :: IO (TChan Text)
+  let myTProc t = do
+        (r, h) <- defaultTProc t
+        liftIO $ hPutStrLn h "clientnotifyregister schandlerid=0 event=any"
+        return (r, h)
+
+  telnetText
+    (myTProc defaultTelnet)
+    (tchanSrc "recv" recv)
+    (parseCond =$= testCatchEvent =$ tchanSink "recv" recv)
+-- clientnotifyregister schandlerid=0 event=any
