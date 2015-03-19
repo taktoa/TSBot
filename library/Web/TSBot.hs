@@ -7,16 +7,18 @@ module Web.TSBot (module Web.TSBot) where
 -- GENERATE: import New.Module as Web.TSBot
 import           Control.Concurrent                (threadDelay)
 import           Control.Concurrent.STM
-import           Control.Concurrent.STM.TChan
-import           Control.Monad                     (forever)
+import           Control.Monad                     hiding (mapM_)
 import           Control.Monad.IO.Class            (liftIO)
 import           Data.Attoparsec.Text
 import           Data.ByteString.Char8             (hPutStrLn)
 import           Data.Conduit
-import           Data.Conduit.Binary               hiding (forM_, mapM_)
+import           Data.Conduit.Binary               hiding (mapM_)
 import           Data.Conduit.Combinators          (decodeUtf8)
 import qualified Data.Conduit.Combinators          as CC
+import           Data.Conduit.TMChan
 import           Data.Foldable                     (forM_, mapM_)
+import           Data.Functor                      ((<$>))
+import           Data.Maybe
 import           Data.Monoid                       ((<>))
 import           Data.Text                         (Text, pack, unpack)
 import qualified Data.Text                         as T
@@ -91,24 +93,30 @@ x |~> y = x
                            [a] -> y a
                            _   -> return ()
 
+mch :: (Text, CQValue) -> CQResponse -> CQResponse
+mch = matching
+
+botPrefix :: Text
+botPrefix  = "LambdaBot: "
+
+isTrue' :: (a -> Bool) -> Maybe a -> Maybe a
+isTrue' p x = if isJust (x >>= guard . p) then x else Nothing
 
 testCatchEvent :: Conduit ECQR IO Text
 testCatchEvent = awaitForever bprd
   where
-    write' :: Show a => Text -> a -> Text
-    write' x y = "sendtextmessage targetmode=2 msg=" <>
-                 escape ("PREFIX" <> x <> pack (show y))
-    write x y = yield (write' x y <> "\n")
---    (|>) = flip ($)
-    beg = matching
     bprd (Left  s) = write "There was an error: " s
     bprd (Right c) = prd c
-    prd = beg ("notifytextmessage", CQVNil)
+    prefix' = pack $ init $ show $ CQVStr botPrefix
+    write' x = "sendtextmessage targetmode=2 msg=" <> escape (botPrefix <> x) <> "\n"
+    write x y = yield $ write' $ (x <>) $ pack $ show y
+    notPrefixOf x y = not (x `T.isPrefixOf` y)
+    prd = mch ("notifytextmessage", CQVNil)
           ~~> ("targetmode", CQVInt 2)
-          |~> (retrieve (AName "msg")
-          |-> mapM_ (write "Message: "))
-
-
+          |-> listToMaybe
+          |-> (>>= retrieve (AName "msg"))
+          |-> isTrue' ((prefix' `notPrefixOf`) . pack . show)
+          |-> mapM_ (write "")
 
 zipCond :: Monad m => a -> Conduit b m (a, b)
 zipCond x = awaitForever $ \i -> yield (x, i)
@@ -116,32 +124,17 @@ zipCond x = awaitForever $ \i -> yield (x, i)
 discCond :: Monad m => Conduit (a, b) m b
 discCond = awaitForever $ \(_, i) -> yield i
 
-tchanSink :: Show i => Text -> TChan i -> Sink i IO ()
-tchanSink t c = awaitForever $ \i -> liftIO $ do
-  atomically $ writeTChan c i
-  T.putStrLn $ "Wrote to TChan " <> t <> ": " <> pack (show i)
-
-
-tchanSrc :: Show i => Text -> TChan i -> Source IO i
-tchanSrc t c = forever $ do
-  liftIO $ threadDelay 1000000
-  v <- liftIO $ atomically $ readTChan c
-  liftIO $ threadDelay 100000
-  liftIO $ T.putStrLn $ "Read from TChan " <> t <> ": " <> pack (show v)
-  yield v
-
-
 -- | Main function
 main :: IO ()
 main = do
-  recv <- newTChanIO :: IO (TChan Text)
+  recv <- atomically (newTBMChan 16 :: STM (TBMChan Text))
   let myTProc t = do
         (r, h) <- defaultTProc t
         liftIO $ hPutStrLn h "clientnotifyregister schandlerid=0 event=any"
         return (r, h)
-
+  let inCond  = CC.map id
+  let outCond = parseCond =$= testCatchEvent
   telnetText
     (myTProc defaultTelnet)
-    (tchanSrc "recv" recv)
-    (parseCond =$= testCatchEvent =$ tchanSink "recv" recv)
--- clientnotifyregister schandlerid=0 event=any
+    (sourceTBMChan recv $= inCond)
+    (outCond =$ sinkTBMChan recv True)

@@ -15,6 +15,7 @@ import           Control.Monad.IO.Class       (liftIO)
 import           Control.Monad.Trans.Resource
 import           Data.ByteString              (ByteString)
 import           Data.Conduit
+import           Data.Conduit.Async
 import           Data.Conduit.Binary          hiding (mapM_)
 import           Data.Conduit.Combinators     (decodeUtf8, encodeUtf8)
 import           Data.Text                    (Text)
@@ -56,6 +57,13 @@ telnetRaw conn src sink = runResourceT $ do
   liftIO $ src $$ sinkHandle hsock
   release releaseThread
   release releaseSock
+
+-- telnetRaw :: TelnetH -> Source IO BS -> Sink BS IO () -> IO ()
+-- telnetRaw conn src sink = runResourceT $ do
+--   (releaseSock, hsock) <- conn
+--   liftIO $ sourceHandle hsock $$& sink
+--   liftIO $ src $$ sinkHandle hsock
+--   release releaseSock
 
 -- | Connect a source/sink to a given telnet handle
 telnetText :: TelnetH -> Source IO Text -> Sink Text IO () -> IO ()
