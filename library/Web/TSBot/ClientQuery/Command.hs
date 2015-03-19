@@ -2,7 +2,15 @@
 {-# LANGUAGE GADTs #-}
 
 -- | ClientQuery command types
-module Web.TSBot.ClientQuery.Command () where
+module Web.TSBot.ClientQuery.Command
+       ( Command (..)
+       , MSCommand (..)
+       , FTCommand (..)
+       , MGCommand (..)
+       , SVCommand (..)
+       , TKCommand (..)
+       , cmdPretty
+       ) where
 
 import           Data.Text (Text)
 
@@ -120,6 +128,7 @@ tkCmdPretty TKCDel  = "tokendelete"
 tkCmdPretty TKCList = "tokenlist"
 tkCmdPretty TKCUse  = "tokenuse"
 
+-- | Pretty print a command
 cmdPretty :: Command a -> Text
 cmdPretty (CommandMS c) = msCmdPretty c
 cmdPretty (CommandFT c) = ftCmdPretty c
