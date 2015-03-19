@@ -33,6 +33,7 @@ library
                       , transformers
                       , mtl
                       , containers
+                      , curl
     default-language:   Haskell2010
     exposed-modules:    Web.TSBot
                         Web.TSBot.ClientQuery.PrettyPrint
@@ -51,6 +52,7 @@ executable TSBot
     build-depends:      base
                       , TSBot
     default-language:   Haskell2010
+    ghc-options:        -rtsopts -threaded -eventlog
     ghc-prof-options:   -auto-all -prof
     hs-source-dirs:     executable
     main-is:            Main.hs
@@ -80,6 +82,7 @@ test-suite tests
                       , transformers
                       , mtl
                       , containers
+                      , curl
     default-language:   Haskell2010
     ghc-options:        -fhpc -Wall -Werror
     hs-source-dirs:     library

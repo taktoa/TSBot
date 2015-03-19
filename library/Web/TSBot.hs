@@ -100,25 +100,19 @@ isTrue' p x = if isJust (x >>= guard . p) then x else Nothing
 testCatchEvent :: Conduit ECQR IO Text
 testCatchEvent = awaitForever bprd
   where
-    bprd (Left  s) = yield $ write' $ "There was an error: " <> pack (show s)
+    bprd (Left  s) = yield $ write $ "There was an error: " <> pack (show s)
     bprd (Right c) = prd c
-    prefix' = pack $ init $ show $ CQVStr botPrefix
-    write' x = "sendtextmessage targetmode=2 msg=" <>
-               escape (botPrefix <> x) <> "\n"
-    write x y = yield $ write' $ x <> y
+    prefix = pack $ init $ show $ CQVStr botPrefix
+    write x = "sendtextmessage targetmode=2 msg=" <>
+              escape (botPrefix <> x) <> "\n"
     notPrefixOf x y = not (x `T.isPrefixOf` y)
+    put x = T.putStrLn x >> return x
     prd = mch ("notifytextmessage", CQVNil)
           ~~> ("targetmode", CQVInt 2)
           |-> listToMaybe
           |-> (>>= retrieve (AName "msg"))
-          |-> isTrue' ((prefix' `notPrefixOf`) . pack . show)
-          |-> mapM_ (write "" . pack . cqvPretty)
-
-zipCond :: Monad m => a -> Conduit b m (a, b)
-zipCond x = awaitForever $ \i -> yield (x, i)
-
-discCond :: Monad m => Conduit (a, b) m b
-discCond = awaitForever $ \(_, i) -> yield i
+          |-> isTrue' ((prefix `notPrefixOf`) . pack . cqvPretty)
+          |-> mapM_ ((>>= (yield . write)) . liftIO . put . pack . cqvPretty)
 
 -- | Main function
 main :: IO ()
