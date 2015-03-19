@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Pretty- and ugly-printers for 'CQResponse'
-module Web.TSBot.ClientQuery.PrettyPrint (resPretty, resPrint) where
+module Web.TSBot.ClientQuery.PrettyPrint (resPretty, resPrint, cqvPretty) where
 
 import           Data.List                      (partition)
 import           Data.Monoid                    ((<>))

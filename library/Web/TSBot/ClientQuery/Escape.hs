@@ -24,6 +24,7 @@ unescP = many' (unescapeP <|> (EChar <$> anyChar))
       return $ EEsc e
 
 unescPP :: Esc -> Char
+unescPP (EEsc 'n')  = '\n'
 unescPP (EEsc 's')  = ' '
 unescPP (EEsc 'p')  = '|'
 unescPP (EEsc '/')  = '/'
@@ -39,6 +40,7 @@ escP :: Parser Text
 escP = T.pack . concat <$> many' escapeP
   where
     escapeP =     (char ' '  *> return "\\s")
+              <|> (char '\n' *> return "\\n")
               <|> (char '|'  *> return "\\p")
               <|> (char '/'  *> return "\\/")
               <|> (char '\\' *> return "\\\\")

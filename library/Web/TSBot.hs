@@ -4,7 +4,7 @@
 -- | The main TSBot library
 module Web.TSBot (module Web.TSBot) where
 
-import Web.TSBot.ClientQuery.Command as Web.TSBot
+import           Web.TSBot.ClientQuery.Command     as Web.TSBot
 -- GENERATE: import New.Module as Web.TSBot
 import           Control.Concurrent                (threadDelay)
 import           Control.Concurrent.STM
@@ -82,23 +82,17 @@ rprintCond = toCond $ either tshow resPrint
 (|>) :: a -> (a -> b) -> b
 x |> y = y x
 
-(~~>) :: (a -> CQResponse) -> (Text, CQValue) -> (a -> CQResponse)
+(~~>) :: (a -> CQResponse) -> (Text, CQValue) -> a -> CQResponse
 x ~~> y = x |-> matching y
 
-(|->) :: (a -> b) -> (b -> c) -> (a -> c)
+(|->) :: (a -> b) -> (b -> c) -> a -> c
 x |-> y = y . x
-
-(|~>) :: Monad m => (a -> [t]) -> (t -> m ()) -> a -> m ()
-x |~> y = x
-          |-> \i -> case i of
-                           [a] -> y a
-                           _   -> return ()
 
 mch :: (Text, CQValue) -> CQResponse -> CQResponse
 mch = matching
 
 botPrefix :: Text
-botPrefix  = "LambdaBot: "
+botPrefix  = "[color=blue]LambdaBot[/color]: "
 
 isTrue' :: (a -> Bool) -> Maybe a -> Maybe a
 isTrue' p x = if isJust (x >>= guard . p) then x else Nothing
@@ -106,18 +100,19 @@ isTrue' p x = if isJust (x >>= guard . p) then x else Nothing
 testCatchEvent :: Conduit ECQR IO Text
 testCatchEvent = awaitForever bprd
   where
-    bprd (Left  s) = write "There was an error: " s
+    bprd (Left  s) = yield $ write' $ "There was an error: " <> pack (show s)
     bprd (Right c) = prd c
     prefix' = pack $ init $ show $ CQVStr botPrefix
-    write' x = "sendtextmessage targetmode=2 msg=" <> escape (botPrefix <> x) <> "\n"
-    write x y = yield $ write' $ (x <>) $ pack $ show y
+    write' x = "sendtextmessage targetmode=2 msg=" <>
+               escape (botPrefix <> x) <> "\n"
+    write x y = yield $ write' $ x <> y
     notPrefixOf x y = not (x `T.isPrefixOf` y)
     prd = mch ("notifytextmessage", CQVNil)
           ~~> ("targetmode", CQVInt 2)
           |-> listToMaybe
           |-> (>>= retrieve (AName "msg"))
           |-> isTrue' ((prefix' `notPrefixOf`) . pack . show)
-          |-> mapM_ (write "")
+          |-> mapM_ (write "" . pack . cqvPretty)
 
 zipCond :: Monad m => a -> Conduit b m (a, b)
 zipCond x = awaitForever $ \i -> yield (x, i)
