@@ -26,6 +26,8 @@ library
                       , stm
                       , async
                       , attoparsec
+                      , boomerang
+                      , peggy
                       , bytestring
                       , text
                       , transformers
@@ -71,6 +73,8 @@ test-suite tests
                       , stm
                       , async
                       , attoparsec
+                      , boomerang
+                      , peggy
                       , bytestring
                       , text
                       , transformers
