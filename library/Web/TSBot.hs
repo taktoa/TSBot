@@ -4,6 +4,7 @@
 -- | The main TSBot library
 module Web.TSBot (module Web.TSBot) where
 
+import Web.TSBot.ClientQuery.Command as Web.TSBot
 -- GENERATE: import New.Module as Web.TSBot
 import           Control.Concurrent                (threadDelay)
 import           Control.Concurrent.STM

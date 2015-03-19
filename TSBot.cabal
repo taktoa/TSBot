@@ -38,6 +38,7 @@ library
                         Web.TSBot.ClientQuery.Telnet
                         Web.TSBot.ClientQuery.Response
                         Web.TSBot.ClientQuery.Escape
+                        Web.TSBot.ClientQuery.Command
                         -- GENERATE: New.Module
     ghc-options:        -Wall
     ghc-prof-options:   -auto-all -prof
@@ -86,6 +87,7 @@ test-suite tests
                         Web.TSBot.ClientQuery.Telnet
                         Web.TSBot.ClientQuery.Response
                         Web.TSBot.ClientQuery.Escape
+                        Web.TSBot.ClientQuery.Command
                         -- GENERATE: New.Module
                         Web.TSBotSpec
                         Web.TSBot.ClientQuery.PrettyPrintSpec
@@ -93,6 +95,7 @@ test-suite tests
                         Web.TSBot.ClientQuery.TelnetSpec
                         Web.TSBot.ClientQuery.ResponseSpec
                         Web.TSBot.ClientQuery.EscapeSpec
+                        Web.TSBot.ClientQuery.CommandSpec
                         -- GENERATE: New.ModuleSpec
     type:               exitcode-stdio-1.0
     default-extensions: OverloadedStrings
