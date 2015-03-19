@@ -102,7 +102,7 @@ testCatchEvent = awaitForever bprd
   where
     bprd (Left  s) = yield $ write $ "There was an error: " <> pack (show s)
     bprd (Right c) = prd c
-    prefix = pack $ init $ show $ CQVStr botPrefix
+    prefix = pack $ init $ cqvPretty $ CQVStr botPrefix
     write x = "sendtextmessage targetmode=2 msg=" <>
               escape (botPrefix <> x) <> "\n"
     notPrefixOf x y = not (x `T.isPrefixOf` y)
