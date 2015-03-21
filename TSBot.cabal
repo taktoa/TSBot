@@ -34,6 +34,7 @@ library
                       , mtl
                       , containers
                       , curl
+                      , template-haskell
     default-language:   Haskell2010
     exposed-modules:    Web.TSBot
                         Web.TSBot.ClientQuery.PrettyPrint
@@ -42,6 +43,8 @@ library
                         Web.TSBot.ClientQuery.Response
                         Web.TSBot.ClientQuery.Escape
                         Web.TSBot.ClientQuery.Command
+                        Web.TSBot.ClientQuery.Command.Parse
+                        Web.TSBot.ClientQuery.Command.PrettyPrint
                         -- GENERATE: New.Module
     ghc-options:        -Wall
     ghc-prof-options:   -auto-all -prof
@@ -83,6 +86,7 @@ test-suite tests
                       , mtl
                       , containers
                       , curl
+                      , template-haskell
     default-language:   Haskell2010
     ghc-options:        -fhpc -Wall -Werror
     hs-source-dirs:     library
@@ -95,6 +99,8 @@ test-suite tests
                         Web.TSBot.ClientQuery.Response
                         Web.TSBot.ClientQuery.Escape
                         Web.TSBot.ClientQuery.Command
+                        Web.TSBot.ClientQuery.Command.Parse
+                        Web.TSBot.ClientQuery.Command.PrettyPrint
                         -- GENERATE: New.Module
                         Web.TSBotSpec
                         Web.TSBot.ClientQuery.PrettyPrintSpec
@@ -103,6 +109,8 @@ test-suite tests
                         Web.TSBot.ClientQuery.ResponseSpec
                         Web.TSBot.ClientQuery.EscapeSpec
                         Web.TSBot.ClientQuery.CommandSpec
+                        Web.TSBot.ClientQuery.Command.ParseSpec
+                        Web.TSBot.ClientQuery.Command.PrettyPrintSpec
                         -- GENERATE: New.ModuleSpec
     type:               exitcode-stdio-1.0
     default-extensions: OverloadedStrings
