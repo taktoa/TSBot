@@ -1,12 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
 -- | Parse commands
-module Web.TSBot.ClientQuery.Command.Parse where
+module Web.TSBot.ClientQuery.Command.Boomerang
+       ( commandParse
+       , commandPretty
+       ) where
 
 import           Prelude                       hiding (id, (.))
 
@@ -19,9 +21,6 @@ import           Data.Functor                  ((<$>))
 import           Data.Monoid                   (Monoid)
 import           Data.String                   (IsString)
 import           Data.Text                     (Text, pack, unpack)
-import           Language.Haskell.TH           (Exp (..), Pat (..), Q (..))
-import qualified Language.Haskell.TH           as TH
-import           Language.Haskell.TH.Quote
 import           Text.Boomerang
 import           Text.Boomerang.String
 import           Text.Boomerang.TH
@@ -37,11 +36,6 @@ $(makeBoomerangs ''CMCommand)
 $(makeBoomerangs ''MGCommand)
 $(makeBoomerangs ''SVCommand)
 $(makeBoomerangs ''TKCommand)
-
-qqComE :: String -> Q Exp
-qqComE s = case commandParse $ pack s of
-            Left  a -> fail $ show a
-            Right o -> dataToExpQ (const Nothing) o
 
 msP :: StringBoomerang () (MSCommand :- ())
 msP = toP [ (rMSCHelp,               "help")
@@ -165,7 +159,7 @@ tkP = toP [ (rTKCAdd,                "tokenadd")
 toP :: (Category cat, Monoid (cat a c)) => [(cat b c, cat a b)] -> cat a c
 toP x = foldr1 (<>) $ map (uncurry (.)) x
 
-comP :: IsCommand a => StringBoomerang () (Command a :- ())
+comP :: StringBoomerang () (Command a :- ())
 comP = xmaph CommandMS unCommandMS msP <>
        xmaph CommandFT unCommandFT ftP <>
        xmaph CommandBN unCommandBN bnP <>
@@ -176,7 +170,7 @@ comP = xmaph CommandMS unCommandMS msP <>
        xmaph CommandSV unCommandSV svP <>
        xmaph CommandTK unCommandTK tkP
 
-commandParse :: IsCommand a => Text -> Either StringError (Command a)
+commandParse :: Text -> Either StringError (Command a)
 commandParse = parseString comP . unpack
 
 (<.>) :: Functor f => (b -> c) -> (a -> f b) -> a -> f c
@@ -185,93 +179,38 @@ commandParse = parseString comP . unpack
 commandPretty :: Command a -> Maybe Text
 commandPretty = pack <.> unparseString comP
 
-unCommandMS :: IsCommand a => Command a -> Maybe MSCommand
+unCommandMS :: Command a -> Maybe MSCommand
 unCommandMS (CommandMS t) = Just t
 unCommandMS _             = Nothing
 
-unCommandFT :: IsCommand a => Command a -> Maybe FTCommand
+unCommandFT :: Command a -> Maybe FTCommand
 unCommandFT (CommandFT t) = Just t
 unCommandFT _             = Nothing
 
-unCommandBN :: IsCommand a => Command a -> Maybe BNCommand
+unCommandBN :: Command a -> Maybe BNCommand
 unCommandBN (CommandBN t) = Just t
 unCommandBN _             = Nothing
 
-unCommandCM :: IsCommand a => Command a -> Maybe CMCommand
+unCommandCM :: Command a -> Maybe CMCommand
 unCommandCM (CommandCM t) = Just t
 unCommandCM _             = Nothing
 
-unCommandCL :: IsCommand a => Command a -> Maybe CLCommand
+unCommandCL :: Command a -> Maybe CLCommand
 unCommandCL (CommandCL t) = Just t
 unCommandCL _             = Nothing
 
-unCommandCH :: IsCommand a => Command a -> Maybe CHCommand
+unCommandCH :: Command a -> Maybe CHCommand
 unCommandCH (CommandCH t) = Just t
 unCommandCH _             = Nothing
 
-unCommandMG :: IsCommand a => Command a -> Maybe MGCommand
+unCommandMG :: Command a -> Maybe MGCommand
 unCommandMG (CommandMG t) = Just t
 unCommandMG _             = Nothing
 
-unCommandSV :: IsCommand a => Command a -> Maybe SVCommand
+unCommandSV :: Command a -> Maybe SVCommand
 unCommandSV (CommandSV t) = Just t
 unCommandSV _             = Nothing
 
-unCommandTK :: IsCommand a => Command a -> Maybe TKCommand
+unCommandTK :: Command a -> Maybe TKCommand
 unCommandTK (CommandTK t) = Just t
 unCommandTK _             = Nothing
-
-
-
--- MS, FT, BN, CM, CL, CH, MG, SV, TK
-
-
-{-
-
-StringBoomerang = Boomerang StringError String
-
-(a -> b)
--> Boomerang e tok () (a :- ())
--> Boomerang e tok () (b :- ())
--}
-
-{-
-msParse :: Parser MSCommand
-msParse =     (string "sendtextmessage" *> return MSCSendTextMessage)
-          <|> (string "sendtextmessage" *> return MSCSendTextMessage)
-
-ftParse :: Parser FTCommand
-ftParse = undefined
-
-bnParse :: Parser BNCommand
-bnParse = undefined
-
-cmParse :: Parser CMCommand
-cmParse = undefined
-
-clParse :: Parser CLCommand
-clParse = undefined
-
-chParse :: Parser CHCommand
-chParse = undefined
-
-mgParse :: Parser MGCommand
-mgParse = undefined
-
-svParse :: Parser SVCommand
-svParse = undefined
-
-tkParse :: Parser TKCommand
-tkParse = undefined
-
-cmdParse :: Parser (Command a)
-cmdParse =     CommandMS <$> msParse
-           <|> CommandFT <$> ftParse
-           <|> CommandBN <$> bnParse
-           <|> CommandCM <$> cmParse
-           <|> CommandCL <$> clParse
-           <|> CommandCH <$> chParse
-           <|> CommandMG <$> mgParse
-           <|> CommandSV <$> svParse
-           <|> CommandTK <$> tkParse
--}

@@ -5,8 +5,8 @@
 module Web.TSBot (module Web.TSBot) where
 
 import           Web.TSBot.ClientQuery.Command     as Web.TSBot
-import Web.TSBot.ClientQuery.Command.Parse as Web.TSBot
-import Web.TSBot.ClientQuery.Command.PrettyPrint as Web.TSBot
+import Web.TSBot.ClientQuery.Command.Boomerang as Web.TSBot
+import Web.TSBot.ClientQuery.Command.Quote as Web.TSBot
 -- GENERATE: import New.Module as Web.TSBot
 import           Control.Concurrent                (threadDelay)
 import           Control.Concurrent.STM
