@@ -23,14 +23,10 @@ qqComE s = case commandParse $ pack s of
             Left  a -> fail $ show a
             Right o -> case o of
               CommandMS c -> toExp c
-              CommandFT c -> toExp c
               CommandBN c -> toExp c
               CommandCL c -> toExp c
               CommandCH c -> toExp c
-              CommandCM c -> toExp c
-              CommandMG c -> toExp c
               CommandSV c -> toExp c
-              CommandTK c -> toExp c
   where
     toExp = dataToExpQ (const Nothing)
 
@@ -39,14 +35,10 @@ qqComP s = case commandParse $ pack s of
             Left  a -> fail $ show a
             Right o -> case o of
               CommandMS c -> toPat c
-              CommandFT c -> toPat c
               CommandBN c -> toPat c
               CommandCL c -> toPat c
               CommandCH c -> toPat c
-              CommandCM c -> toPat c
-              CommandMG c -> toPat c
               CommandSV c -> toPat c
-              CommandTK c -> toPat c
   where
     toPat = dataToPatQ (const Nothing)
 
