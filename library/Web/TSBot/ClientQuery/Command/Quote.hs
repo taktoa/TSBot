@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE QuasiQuotes               #-}
 
 -- | Pretty print commands
 module Web.TSBot.ClientQuery.Command.Quote (com) where
@@ -15,7 +14,9 @@ import           Web.TSBot.ClientQuery.Command
 import           Web.TSBot.ClientQuery.Command.Boomerang
 
 com :: QuasiQuoter
-com = QuasiQuoter { quoteExp = qqComE, quotePat = qqComP }
+com = QuasiQuoter { quoteExp = qqComE
+                  , quotePat = qqComP
+                  }
 
 qqComE :: String -> Q Exp
 qqComE s = case commandParse $ pack s of
