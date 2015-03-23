@@ -4,36 +4,37 @@
 -- | The main TSBot library
 module Web.TSBot (module Web.TSBot) where
 
-import           Web.TSBot.ClientQuery.Command     as Web.TSBot
-import Web.TSBot.ClientQuery.Command.Boomerang as Web.TSBot
-import Web.TSBot.ClientQuery.Command.Quote as Web.TSBot
--- GENERATE: import New.Module as Web.TSBot
-import           Control.Concurrent                (threadDelay)
+import           Control.Concurrent                      (threadDelay)
 import           Control.Concurrent.STM
-import           Control.Monad                     hiding (mapM_)
-import           Control.Monad.IO.Class            (liftIO)
+import           Control.Monad                           hiding (mapM_)
+import           Control.Monad.IO.Class                  (liftIO)
 import           Data.Attoparsec.Text
-import           Data.ByteString.Char8             (hPutStrLn)
+import           Data.ByteString.Char8                   (hPutStrLn)
 import           Data.Conduit
-import           Data.Conduit.Binary               hiding (mapM_)
-import           Data.Conduit.Combinators          (decodeUtf8)
-import qualified Data.Conduit.Combinators          as CC
+import           Data.Conduit.Binary                     hiding (mapM_)
+import           Data.Conduit.Combinators                (decodeUtf8)
+import qualified Data.Conduit.Combinators                as CC
 import           Data.Conduit.TMChan
-import           Data.Foldable                     (forM_, mapM_)
-import           Data.Functor                      ((<$>))
+import           Data.Foldable                           (forM_, mapM_)
+import           Data.Functor                            ((<$>))
 import           Data.Maybe
-import           Data.Monoid                       ((<>))
-import           Data.Text                         (Text, pack, unpack)
-import qualified Data.Text                         as T
-import qualified Data.Text.IO                      as T (putStrLn)
-import           Prelude                           hiding (mapM_)
-import           System.IO                         (BufferMode (..),
-                                                    hSetBuffering, stdin)
-import           Web.TSBot.ClientQuery.Escape      as Web.TSBot
-import           Web.TSBot.ClientQuery.Parse       as Web.TSBot
-import           Web.TSBot.ClientQuery.PrettyPrint as Web.TSBot
-import           Web.TSBot.ClientQuery.Response    as Web.TSBot
-import           Web.TSBot.ClientQuery.Telnet      as Web.TSBot
+import           Data.Monoid                             ((<>))
+import           Data.Text                               (Text, pack, unpack)
+import qualified Data.Text                               as T
+import qualified Data.Text.IO                            as T (putStrLn)
+import           Prelude                                 hiding (mapM_)
+import           System.IO                               (BufferMode (..),
+                                                          hSetBuffering, stdin)
+
+-- GENERATE: import New.Module as Web.TSBot
+import           Web.TSBot.ClientQuery.Command           as Web.TSBot
+import           Web.TSBot.ClientQuery.Command.Boomerang as Web.TSBot
+import           Web.TSBot.ClientQuery.Command.Quote     as Web.TSBot
+import           Web.TSBot.ClientQuery.Escape            as Web.TSBot
+import           Web.TSBot.ClientQuery.Parse             as Web.TSBot
+import           Web.TSBot.ClientQuery.PrettyPrint       as Web.TSBot
+import           Web.TSBot.ClientQuery.Response          as Web.TSBot
+import           Web.TSBot.ClientQuery.Telnet            as Web.TSBot
 
 tshow :: Show a => a -> Text
 tshow = pack . show
