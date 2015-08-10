@@ -1,0 +1,581 @@
+SIMPLE:
+
+import text
+
+digit                ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+nothing              ::= ""
+natural              ::= digit natural | nothing
+
+time                 ::= natural
+banID                ::= natural
+channelID            ::= natural
+clientID             ::= natural
+clientUID            ::= natural
+schandlerID          ::= natural
+
+zero                 ::= "Z"
+(#succ <a>)          ::= "S" <a>
+peano                ::= (#succ {peano}) | zero
+
+(#subp <a> zero)     ::= <a>
+(#subp (#succ <a>)
+       (#succ <b>))  ::= (#subp <a> <b>)
+(#mulp <a> zero)     ::= zero
+(#mulp <a>
+       (#succ <b>))  ::= (#addp <a> (#mulp <a> <b>))
+(#addp <a> zero)     ::= <a>
+(#addp <a>
+       (#succ <b>))  ::= (#addp (succ <a>) <b>)
+(#incrp <a>)         ::= (succ <a>)
+(#decrp zero)        ::= zero
+(#decrp (#succ <a>)) ::= <a>
+
+(#add <a> <b>)       ::= (#addp (#toPeano <a>) (#toPeano <b>))
+(#mul <a> <b>)       ::= (#mulp (#toPeano <a>) (#toPeano <b>))
+
+(#amul10 <a> <b>)    ::= (#add (#mul <a> "10") <b>)
+
+(#toPeano "0")       ::= zero
+(#toPeano "1")       ::= (#add "1" "0")
+(#toPeano "2")       ::= (#add "1" "1")
+(#toPeano "3")       ::= (#add "1" "2")
+(#toPeano "4")       ::= (#add "1" "3")
+(#toPeano "5")       ::= (#add "1" "4")
+(#toPeano "6")       ::= (#add "1" "5")
+(#toPeano "7")       ::= (#add "1" "6")
+(#toPeano "8")       ::= (#add "1" "7")
+(#toPeano "9")       ::= (#add "1" "8")
+(#toPeano "10")      ::= (#add "1" "9")
+(#toPeano (<a> "0")) ::= (#amul10 <a> "0")
+(#toPeano (<a> "1")) ::= (#amul10 <a> "1")
+(#toPeano (<a> "2")) ::= (#amul10 <a> "2")
+(#toPeano (<a> "3")) ::= (#amul10 <a> "3")
+(#toPeano (<a> "4")) ::= (#amul10 <a> "4")
+(#toPeano (<a> "5")) ::= (#amul10 <a> "5")
+(#toPeano (<a> "6")) ::= (#amul10 <a> "6")
+(#toPeano (<a> "7")) ::= (#amul10 <a> "7")
+(#toPeano (<a> "8")) ::= (#amul10 <a> "8")
+(#toPeano (<a> "9")) ::= (#amul10 <a> "9")
+
+(#pad <a>)           ::= " " <a> " "
+(<a> #set <b>)       ::= (#pad (<a> "=" <b>))
+
+boolean              ::= true | false
+
+(#eq "0" "0")        ::= true
+(#eq <a> <b>)        ::= (#eq (#sub <a> <b>) "0")
+
+(#if true <a> <b>)   ::= <a>
+(#if false <a> <b>)  ::= <b>
+(#if <c> <a> <b>)    ::= (#if (#eval <c>) <a> <b>)
+(#unless <c> <b>)    ::= (#if (#eval <c>) "" <b>)
+
+(#rangep <a> (#succ <b>))
+                     ::= (#unless (#eq <a> (#succ <b>))
+                                  ((#succ <b>) | (#rangep <a> <b>)))
+(#range <a> <b>)     ::= (#rangep (#toPeano <a>) (#toPeano <b>))
+
+-- Speex Narrowband     = 0
+-- Speex Wideband       = 1
+-- Speex Ultra-Wideband = 2
+-- CELT Mono            = 3
+-- Opus Voice           = 4
+-- Opus Music           = 5
+
+cCodec               ::= (#range "0" "5")
+cCodecQuality        ::= (#range "0" "10")
+
+nnatural             ::= "-1" | natural
+flag                 ::= "1" | "0"
+
+channel_property_set ::= ("channel_name"                            #set {text})
+                       | ("channel_topic"                           #set {text})
+                       | ("channel_description"                     #set {text})
+                       | ("channel_codec"                           #set {cCodec})
+                       | ("channel_codec_quality"                   #set {cCodecQuality})
+                       | ("channel_order"                           #set {natural})
+                       | ("channel_maxclients"                      #set {nnatural})
+                       | ("channel_maxfamilyclients"                #set {nnatural})
+                       | ("channel_flag_permanent"                  #set {flag})
+                       | ("channel_flag_semi_permanent"             #set {flag})
+                       | ("channel_flag_default"                    #set {flag})
+                       | ("channel_flag_password"                   #set {flag})
+                       | ("channel_flag_are_subscribed"             #set {flag})
+                       | ("channel_name_phonetic"                   #set {text})
+                       | ("channel_icon_id"                         #set {natural})
+                       | {channel_property_set} {channel_property_set}
+
+channel_property_get ::= "channel_name"
+                       | "channel_topic"
+                       | "channel_description"
+                       | "channel_codec"
+                       | "channel_codec_quality"
+                       | "channel_order"
+                       | "channel_maxclients"
+                       | "channel_maxfamilyclients"
+                       | "channel_flag_permanent"
+                       | "channel_flag_semi_permanent"
+                       | "channel_flag_default"
+                       | "channel_flag_password"
+                       | "channel_flag_are_subscribed"
+                       | "channel_name_phonetic"
+                       | "channel_icon_id"
+                       | {channel_property_get} {channel_property_get}
+
+client_property_set  ::= ("client_nickname"                         #set {text})
+                       | ("client_away"                             #set {flag})
+                       | ("client_away_message"                     #set {text})
+                       | ("client_input_muted"                      #set {flag})
+                       | ("client_output_muted"                     #set {flag})
+                       | ("client_input_deactivated"                #set {flag})
+                       | ("client_nickname_phonetic"                #set {text})
+                       | ("client_flag_avatar"                      #set {hash})
+                       | ("client_meta_data"                        #set {text})
+                       | {client_property_set} {client_property_set}
+
+client_property_get  ::= "client_unique_identifier"
+                       | "client_nickname"
+                       | "client_input_muted"
+                       | "client_output_muted"
+                       | "client_outputonly_muted"
+                       | "client_input_hardware"
+                       | "client_output_hardware"
+                       | "client_meta_data"
+                       | "client_is_recording"
+                       | "client_database_id"
+                       | "client_channel_group_id"
+                       | "client_servergroups"
+                       | "client_away"
+                       | "client_away_message"
+                       | "client_type"
+                       | "client_flag_avatar"
+                       | "client_talk_power"
+                       | "client_talk_request"
+                       | "client_talk_request_msg"
+                       | "client_description"
+                       | "client_is_talker"
+                       | "client_is_priority_speaker"
+                       | "client_unread_messages"
+                       | "client_nickname_phonetic"
+                       | "client_needed_serverquery_view_power"
+                       | "client_icon_id"
+                       | "client_is_channel_commander"
+                       | "client_country"
+                       | "client_channel_group_inherited_channel_id"
+                       | "client_flag_talking"
+                       | "client_is_muted"
+                       | "client_volume_modificator"
+
+channel_notify_event ::= "notifytalkstatuschange"
+                       | "notifymessage"
+                       | "notifymessagelist"
+                       | "notifycomplainlist"
+                       | "notifybanlist"
+                       | "notifyclientmoved"
+                       | "notifyclientleftview"
+                       | "notifycliententerview"
+                       | "notifyclientpoke"
+                       | "notifyclientchatclosed"
+                       | "notifyclientchatcomposing"
+                       | "notifyclientupdated"
+                       | "notifyclientids"
+                       | "notifyclientdbidfromuid"
+                       | "notifyclientnamefromuid"
+                       | "notifyclientnamefromdbid"
+                       | "notifyclientuidfromclid"
+                       | "notifyconnectioninfo"
+                       | "notifychannelcreated"
+                       | "notifychanneledited"
+                       | "notifychanneldeleted"
+                       | "notifychannelmoved"
+                       | "notifyserveredited"
+                       | "notifyserverupdated"
+                       | "channellist"
+                       | "channellistfinished"
+                       | "notifytextmessage"
+                       | "notifycurrentserverconnectionchanged"
+                       | "notifyconnectstatuschange"
+
+cldefaultOpts ::= " -uid -away -voice -groups -icon -country "
+chdefaultOpts ::= " -topic -flags -voice -icon -limits "
+
+banadd             ::= "banadd"
+                       ("uid" #set {clientUID})
+                       ("time" #set {time})
+                       ("banreason" #set {text})
+bandelall          ::= "bandelall"
+bandel             ::= "bandel"
+                       ("banid" #set {banID})
+banlist            ::= "banlist"
+channelclientlist  ::= "channelclientlist"
+                       ("cid" #set {channelID})
+                       {cldefaultOpts}
+channelconnectinfo ::= "channelconnectinfo"
+channelcreate      ::= "channelcreate"
+                       ("channel_name" #set {text})
+                       {channel_property_set}
+channeldelete      ::= "channeldelete"
+                       ("force" #set "1")
+                       ("cid" #set {channelID})
+channeledit        ::= "channeledit"
+                       ("cid" #set {channelID})
+                       {channel_property_set}
+channellist        ::= "channellist"
+                       {chDefaultOpts}
+channelmove        ::= "channelmove"
+                       ("cid" #set {channelID})
+                       ("cpid" #set {channelID})
+channelvariable    ::= "channelvariable"
+                       ("cid" #set {channelID})
+                       {channel_property_get}
+clientuid->dbid    ::= "clientgetdbidfromuid"
+                       ("cluid" #set {clientUID})
+clientgetids       ::= "clientgetids"
+                       ("cluid" #set {clientUID})
+clientuid->name    ::= "clientgetnamefromuid"
+                       ("cluid" #set {clientUID})
+clientclid->uid    ::= "clientgetuidfromclid"
+                       ("clid" #set {clientID})
+clientkick         ::= "clientkick"
+                       ("reasonid" #set "5")
+                       ("reasonmsg" #set {text})
+                       ("clid" #set {clientID})
+clientlist         ::= "clientlist"
+                       {cldefaultOpts}
+clientmove         ::= "clientmove"
+                       ("cid" #set {channelID})
+                       ("clid" #set {clientID})
+clientmute         ::= "clientmute"
+                       ("clid" #set {clientID})
+clientunmute       ::= "clientunmute"
+                       ("clid" #set {clientID})
+clientnotifyreg    ::= "clientnotifyregister"
+                       ("schandlerid" #set {schandlerID})
+                       ("event" #set {client_notify_event})
+clientnotifyunreg  ::= "clientnotifyunregister"
+clientpoke         ::= "clientpoke"
+                       ("msg" #set {text})
+                       ("clid" #set {clientID})
+clientupdate       ::= "clientupdate"
+                       {client_property_set}
+clientvariable     ::= "clientvariable"
+                       ("clid" #set {clientID})
+                       {client_property_get}
+schandlercurrent   ::= "currentschandlerid"
+quit               ::= "quit"
+prvmessage         ::= "sendtextmessage"
+                       ("targetmode" #set "1")
+                       ("target" #set {clientID})
+                       ("msg" #set {text})
+chnmessage         ::= "sendtextmessage"
+                       ("targetmode" #set "2")
+                       ("msg" #set {text})
+srvmessage         ::= "sendtextmessage"
+                       ("targetmode" #set "3")
+                       ("msg" #set {text})
+serverconnectinfo  ::= "serverconnectinfo"
+schandlerlist      ::= "serverconnectionhandlerlist"
+servervariable     ::= "servervariable"
+                       {server_property_get}
+use                ::= "use"
+                       ("schandlerid" #set {scHandlerID})
+whoami             ::= "whoami"
+
+
+
+---------------------------------------------------
+
+
+
+
+banadd
+  [ip={regexp}]
+  [name={regexp}]
+  [uid={clientUID}]
+  [time={timeInSeconds}]
+  [banreason={text}]
+banclient
+  clid={clientID}
+    | cldbid={clientDatabaseID}
+    | uid={clientUID}
+  [time={timeInSeconds}]
+  [banreason={text}]
+bandelall
+bandel
+  banid={banID}
+banlist
+channeladdperm
+  cid={channelID}
+  ( permid={permID}
+      | permsid={permName}
+    permvalue={permValue} )
+channelclientaddperm
+  cid={channelID}
+  cldbid={clientDBID}
+  ( permid={permID}
+      | permsid={permName}
+    permvalue={permValue} )
+channelclientdelperm
+  cid={channelID}
+  cldbid={clientDBID}
+  ( permid={permID}
+      | permsid={permName} )
+channelclientlist
+  cid=<cID>
+  [-uid]
+  [-away]
+  [-voice]
+  [-groups]
+  [-icon]
+  [-country]
+channelclientpermlist
+  cid={channelID}
+  cldbid={clientDBID}
+  [-permsid]
+channelconnectinfo
+  [cid={channelid}]
+channelcreate
+  channel_name={channelName}
+  ( [channel_properties] )
+channeldelete
+  cid={channelID}
+  force={1|0}
+channeldelperm
+  cid={channelID}
+  ( permid={permID}
+      | permsid={permName} )
+channeledit
+  cid={channelID}
+  ( [channel_properties] )
+channelgroupaddperm
+  cgid={groupID}
+  ( permid={permID}
+      | permsid={permName}
+    permvalue={permValue} )
+channelgroupadd
+  name={groupName}
+  [type={groupDbType}]
+channelgroupclientlist
+  [cid={channelID}]
+  [cldbid={clientDBID}]
+  [cgid={groupID}]
+channelgroupdelperm
+  cgid={groupID}
+  ( [permid={permID}] )
+  ( [permsid={permName}] )
+channelgroupdel
+  cgid={groupID}
+  force={1|0}
+channelgrouplist
+channelgrouppermlist
+  cgid={groupID}
+  [-permsid]
+channellist
+  [-topic]
+  [-flags]
+  [-voice]
+  [-icon]
+  [-limits]
+channelmove
+  cid={channelID}
+  cpid={channelParentID}
+  [order={channelSortOrder}]
+channelpermlist
+  cid={channelID}
+  [-permsid]
+channelvariable
+  ( cid={channelID}
+    {properties} )
+clientaddperm
+  cldbid={clientDBID}
+  ( permid={permID}
+      | permsid={permName}
+    permvalue={permValue}
+    permskip={1|0} )
+clientdbdelete
+  cldbid={clientDBID}
+clientdbedit
+  cldbid={clientDBID}
+  ( [client_properties] )
+clientdblist
+  [start={offset}]
+  [duration={limit}]
+  [-count]
+channeldelperm
+  cldbid={clientDBID}
+  ( permid={permID} | permsid={permName} )
+clientgetdbidfromuid
+  cluid={clientUID}
+clientgetids
+  cluid={clientUID}
+clientgetnamefromdbid
+  cldbid={clientDBID}
+clientgetnamefromuid
+  cluid={clientUID}
+clientgetuidfromclid
+  clid={clientID}
+clientkick
+  reasonid={4|5}
+  [reasonmsg={text}]
+  clid={clientID}
+clientlist
+  [-uid]
+  [-away]
+  [-voice]
+  [-groups]
+  [-icon]
+  [-country]
+clientmove
+  cid={channelID}
+  [cpw={channelPassword}]
+  clid={clientID}
+clientmute
+  clid={clientID1}
+clientnotifyregister
+  schandlerid=<serverConnectionHandlerID>
+  event=<event>
+clientnotifyunregister
+clientpoke
+  msg={txt}
+  clid={clientID}
+clientunmute
+  ( clid={clientID1} )
+clientupdate
+  ( ident=value )
+clientvariable
+  ( clid={clientID} properties )
+complainadd
+  tcldbid={targetClientDBID}
+  message={text}
+complaindelall
+  tcldbid={targetClientDBID}
+complaindel
+  tcldbid={targetClientDBID}
+  fcldbid={fromClientDBID}
+complainlist
+  [tcldbid={targetClientDBID}]
+currentschandlerid
+ftcreatedir
+  cid={channelID}
+  cpw={channelPassword}
+  dirname={dirPath}
+ftdeletefile
+  cid={channelID}
+  cpw={channelPassword}
+  ( name={filePath} )
+ftgetfileinfo
+  cid={channelID}
+  cpw={channelPassword}
+  ( name={filePath} )
+ftgetfilelist
+  cid={channelID}
+  cpw={channelPassword}
+  path={filePath}
+ftinitdownload
+  clientftfid={clientFileTransferID}
+  name={filePath}
+  cid={channelID}
+  cpw={channelPassword}
+  seekpos={seekPosition}
+ftinitupload
+  clientftfid={clientFileTransferID}
+  name={filePath}
+  cid={channelID}
+  cpw={channelPassword}
+  size={fileSize}
+  overwrite={1|0}
+  resume={1|0}
+ftlist
+ftrenamefile
+  cid={channelID}
+  cpw={channelPassword}
+  [tcid={targetChannelID}]
+  [tcpw={targetChannelPassword}]
+  oldname={oldFilePath}
+  newname={newFilePath}
+ftstop
+  serverftfid={serverFileTransferID}
+  delete={1|0}
+hashpassword
+  password={unhashed password}
+messageadd
+  cluid={clientUID}
+  subject={subject}
+  message={text}
+messagedel
+  msgid={messageID}
+messageget
+  msgid={messageID}
+messagelist
+messageupdateflag
+  msgid={messageID}
+  flag={1|0}
+permoverview
+  cid={channelID}
+  cldbid={clientDBID}
+  permid={permID}
+quit
+sendtextmessage
+  targetmode={1-3}
+  [target=clientID]
+  msg={text}
+serverconnectinfo
+serverconnectionhandlerlist
+servergroupaddclient
+  sgid={groupID}
+  cldbid={clientDBID}
+servergroupaddperm
+  sgid={groupID}
+  ( permid={permID}
+      | permsid={permName}
+    permvalue={permValue}
+    permnegated={1|0} )
+  ( permskip={1|0} )
+servergroupadd
+  name={groupName}
+  [type={groupDbType}]
+servergroupclientlist
+  sgid={groupID}
+  [-names]
+servergroupdelclient
+  sgid={groupID}
+  cldbid={clientDBID}
+servergroupdelperm
+  sgid={groupID}
+  ( permid={permID}
+      | permsid={permName} )
+servergroupdel
+  sgid={groupID}
+  force={1|0}
+servergrouplist
+servergrouppermlist
+  sgid={groupID}
+  [-permsid]
+servergroupsbyclientid
+  cldbid={clientDBID}
+servervariable
+  properties
+setclientchannelgroup
+  cgid={groupID}
+  cid={channelID}
+  cldbid={clientDBID}
+tokenadd
+  tokentype={1|0}
+  tokenid1={groupID}
+  tokenid2={channelID}
+  [tokendescription={description}]
+  [tokencustomset={customFieldSet}]
+tokendelete
+  token={tokenKey}
+tokenlist
+tokenuse
+  token={tokenKey}
+use
+  [schandlerid={scHandlerID}]
+  [{scHandlerID}]
+verifychannelpassword
+  cid={channelID}
+  password={channelPassword}
+verifyserverpassword
+  password={serverPassword}
+whoami

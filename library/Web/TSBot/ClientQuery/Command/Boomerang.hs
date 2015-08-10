@@ -27,11 +27,11 @@ import           Text.Boomerang.TH
 
 import           Web.TSBot.ClientQuery.Command
 
-$(makeBoomerangs ''MSCommand)
-$(makeBoomerangs ''BNCommand)
-$(makeBoomerangs ''CLCommand)
-$(makeBoomerangs ''CHCommand)
-$(makeBoomerangs ''SVCommand)
+$(makeBoomerangs ''Command)
+
+commandP :: StringBoomerang () (Command :- ())
+commandP = ()
+
 
 msP :: StringBoomerang () (MSCommand :- ())
 msP = toP [ (rMSCHelp,               "help")

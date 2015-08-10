@@ -6,6 +6,7 @@ module Web.TSBot.ClientQuery.Command where
 
 import           Data.Data
 import           Data.Natural
+import           Data.Set     (Set)
 import           Data.Text    (Text, pack, unpack)
 
 data POrdering = LT | GT | EQ | NC
@@ -91,8 +92,6 @@ data ClientPropertySet = ClPSNickname         Text
                        | ClPSFlagAvatar       Hash
                        | ClPSMetaData         Text
 
-data Set a b = Set a b
-
 data RawCommand = RCQuit
                 | RCUse
                 | RCCurrentSCHandlerId
@@ -126,12 +125,51 @@ data RawCommand = RCQuit
                 | RCServerConnHandlerList
                 deriving (Eq, Show, Read, Data, Typeable)
 
+data Event = NotifyTalk
+{-
+  notifytalkstatuschange
+  notifymessage
+  notifymessagelist
+  notifycomplainlist
+  notifybanlist
+  notifyclientmoved
+  notifyclientleftview
+  notifycliententerview
+  notifyclientpoke
+  notifyclientchatclosed
+  notifyclientchatcomposing
+  notifyclientupdated
+  notifyclientids
+  notifyclientdbidfromuid
+  notifyclientnamefromuid
+  notifyclientnamefromdbid
+  notifyclientuidfromclid
+  notifyconnectioninfo
+  notifychannelcreated
+  notifychanneledited
+  notifychanneldeleted
+  notifychannelmoved
+  notifyserveredited
+  notifyserverupdated
+  channellist
+  channellistfinished
+  notifytextmessage
+  notifycurrentserverconnectionchanged
+  notifyconnectstatuschange
+-}
+
 type UID = Natural
 type Time = Natural
 type BanID = Natural
 type ClientID = Natural
 type ClientUID = Text
 type SCHandlerID = Natural
+type Msg = Text
+type ChannelID = Natural
+type ClPS = Set ClientPropertySet
+type ChPS = Set ChannelPropertySet
+type ClPG = Set ClientPropertyGet
+type ChPG = Set ChannelPropertyGet
 
 data Command = CQuit
              | CWhoAmI
@@ -164,7 +202,6 @@ data Command = CQuit
              | CChannelEdit     ChannelID   ChPS
              | CChannelMove     ChannelID   ChannelID
              | CChannelVariable ChannelID   ChPG
-             | CServerVariable  SvPG
              deriving (Eq, Show, Read, Data, Typeable)
 
 

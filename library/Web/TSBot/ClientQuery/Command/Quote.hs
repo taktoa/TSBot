@@ -1,6 +1,4 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
-{-# LANGUAGE GADTs                     #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 
 -- | Pretty print commands
 module Web.TSBot.ClientQuery.Command.Quote (com) where
@@ -21,24 +19,14 @@ com = QuasiQuoter { quoteExp = qqComE
 qqComE :: String -> Q Exp
 qqComE s = case commandParse $ pack s of
             Left  a -> fail $ show a
-            Right o -> case o of
-              CommandMS c -> toExp c
-              CommandBN c -> toExp c
-              CommandCL c -> toExp c
-              CommandCH c -> toExp c
-              CommandSV c -> toExp c
+            Right o -> toExp o
   where
     toExp = dataToExpQ (const Nothing)
 
 qqComP :: String -> Q Pat
 qqComP s = case commandParse $ pack s of
             Left  a -> fail $ show a
-            Right o -> case o of
-              CommandMS c -> toPat c
-              CommandBN c -> toPat c
-              CommandCL c -> toPat c
-              CommandCH c -> toPat c
-              CommandSV c -> toPat c
+            Right o -> toPat o
   where
     toPat = dataToPatQ (const Nothing)
 
